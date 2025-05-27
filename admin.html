@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-image: url('bg.jpg');
+      background-size: cover;
+      background-position: center;
+      color: #fff;
+    }
+    select {
+  background: #1c1c1c;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+
+    .container {
+      max-width: 1000px;
+      margin: 50px auto;
+      background: rgba(0, 0, 0, 0.85);
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,255,255,0.2);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #00ffc3;
+      font-weight: 600;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section h3 {
+      color: #00ffe7;
+      margin-bottom: 15px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 15px;
+      border: none;
+      border-radius: 8px;
+      background: #1c1c1c;
+      color: #fff;
+      font-size: 14px;
+    }
+
+    textarea {
+      resize: vertical;
+    }
+
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.3s ease;
+    }
+
+    .btn-post {
+      background-color: #00cc88;
+      color: white;
+    }
+
+    .btn-post:hover {
+      background-color: #00b37a;
+    }
+
+    .feedback-card {
+      background: #1f1f1f;
+      padding: 15px;
+      border-left: 5px solid #00ffc3;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      transition: transform 0.2s ease;
+    }
+
+    .feedback-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn-edit {
+      background-color: #ffaa00;
+      color: white;
+    }
+
+    .btn-edit:hover {
+      background-color: #e69a00;
+    }
+
+    .btn-delete {
+      background-color: #ff4d4d;
+      color: white;
+    }
+
+    .btn-delete:hover {
+      background-color: #e64545;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    label {
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Admin Dashboard</h2>
+
+    <h2>Post Notice</h2>
+    <div class="notice-post">
+      <input type="text" id="notice-title" placeholder="Enter Notice Title" />
+      <textarea id="notice-content" placeholder="Enter Notice Content"></textarea>
+      <button onclick="postNotice()">Post Notice</button>
+    </div>
+    <div class="section">
+      <h3>Manage Notices</h3>
+      <div id="noticeContainer"></div>    
+
+    <div class="section feedback-list">
+      <h3>Manage Feedback & Complaints</h3>
+      <div id="feedbackContainer"></div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    async function fetchFeedbacks() {
+      const res = await fetch('/feedback', {
+        headers: { Authorization: 'Bearer ' + token }
+      });
+      const data = await res.json();
+      if (data.success) {
+        const container = document.getElementById('feedbackContainer');
+        container.innerHTML = '';
+        data.feedbacks.forEach(fb => {
+          const card = document.createElement('div');
+          card.className = 'feedback-card';
+          card.innerHTML = `
+            <p><strong>From:</strong> ${fb.user_name}</p>
+            <label>Subject</label>
+           <select id="sub-${fb.id}">
+  <option value="electricity" ${fb.subject === 'electricity' ? 'selected' : ''}>Electricity</option>
+  <option value="water supply" ${fb.subject === 'water supply' ? 'selected' : ''}>Water Supply</option>
+  <option value="transport management" ${fb.subject === 'transport management' ? 'selected' : ''}>Transport Management</option>
+  <option value="sanitation" ${fb.subject === 'sanitation' ? 'selected' : ''}>Sanitation</option>
+  <option value="DAO/ civil registration" ${fb.subject === 'DAO/ civil registration' ? 'selected' : ''}>DAO/ Civil Registration</option>
+  <option value="health" ${fb.subject === 'health' ? 'selected' : ''}>Health</option>
+  <option value="CIAA" ${fb.subject === 'CIAA' ? 'selected' : ''}>CIAA</option>
+  <option value="others" ${fb.subject === 'others' ? 'selected' : ''}>Others</option>
+</select>
+
+            <label>Message</label>
+            <textarea id="msg-${fb.id}" rows="3">${fb.message}</textarea>
+            <label>Priority</label>
+            <select id="pri-${fb.id}">
+              <option value="low" ${fb.priority === 'low' ? 'selected' : ''}>Low</option>
+              <option value="medium" ${fb.priority === 'medium' ? 'selected' : ''}>Medium</option>
+              <option value="high" ${fb.priority === 'high' ? 'selected' : ''}>High</option>
+            </select>
+            <div class="button-group">
+              <button class="btn btn-edit" onclick="updateFeedback(${fb.id})">Update</button>
+              <button class="btn btn-delete" onclick="deleteFeedback(${fb.id})">Delete</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      }
+    }
+
+    async function updateFeedback(id) {
+      const subject = document.getElementById(`sub-${id}`).value;
+      const message = document.getElementById(`msg-${id}`).value;
+      const priority = document.getElementById(`pri-${id}`).value;
+
+      const res = await fetch(`/feedback/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: 'Bearer ' + token
+        },
+        body: JSON.stringify({ subject, message, priority })
+      });
+
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) fetchFeedbacks();
+    }
+
+    async function deleteFeedback(id) {
+      const res = await fetch(`/feedback/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: 'Bearer ' + token }
+      });
+
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) fetchFeedbacks();
+    }
+
+    async function postNotice() {
+    const title = document.getElementById("notice-title").value.trim();
+    const content = document.getElementById("notice-content").value.trim();
+
+    if (!title || !content) {
+      alert("Please enter both title and content.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/notices", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title, content }),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        alert("Notice posted!");
+        document.getElementById("notice-title").value = "";
+        document.getElementById("notice-content").value = "";
+      } else {
+        alert(result.message || "Failed to post notice.");
+      }
+    } catch (error) {
+      console.error("Client error:", error);
+      alert("Server error");
+    }
+  }
+    if (!token || localStorage.getItem('role') !== 'admin') {
+      window.location.href = 'login.html';
+    }
+    fetchFeedbacks();
+  </script>
+</body>
+</html>
