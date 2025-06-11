@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Citizen Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(120deg, #1e3c72, #2a5298);
+      color: #fff;
+    }
+    .container {
+      max-width: 900px;
+      margin: 40px auto;
+      background: rgba(0, 0, 0, 0.8);
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    }
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .logout {
+      text-align: right;
+    }
+    .logout button {
+      background-color: #e74c3c;
+      border: none;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    form {
+      display: grid;
+      gap: 15px;
+      margin-top: 20px;
+    }
+    select, textarea, input {
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      font-size: 16px;
+    }
+    button[type="submit"] {
+      background-color: #3498db;
+      color: white;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button[type="submit"]:hover {
+      background-color: #2980b9;
+    }
+    .feedback-list, #publicFeedbackList {
+      margin-top: 30px;
+    }
+    .feedback-item, .public-feedback-card {
+      background-color: #2c3e50;
+      border-radius: 10px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .priority {
+      font-weight: bold;
+      color: #f1c40f;
+    }
+    .upvote-button {
+      margin-top: 8px;
+      padding: 8px 14px;
+      background-color: #1abc9c;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .upvote-button:disabled {
+      background-color: #7f8c8d;
+      cursor: not-allowed;
+    }
+    .section-title {
+      font-size: 20px;
+      border-bottom: 2px solid #fff;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logout">
+      <button onclick="logout()">Logout</button>
+    </div>
+    <h1>Citizen Dashboard</h1>
+
+    <h2 class="section-title">Public Feedback</h2>
+    <div id="publicFeedbackList"></div>
+
+    <h2 class="section-title">Submit New Feedback</h2>
+    <form id="feedbackForm">
+      <select id="subject" required>
+        <option value="">-- Select Subject --</option>
+        <option value="electricity">Electricity</option>
+        <option value="water supply">Water Supply</option>
+        <option value="transport management">Transport Management</option>
+        <option value="sanitation">Sanitation</option>
+        <option value="DAO/ civil registration">DAO/ Civil Registration</option>
+        <option value="health">Health</option>
+        <option value="CIAA">CIAA</option>
+        <option value="others">Others</option>
+      </select>
+
+      <textarea id="message" rows="4" placeholder="Complaint/feedback..." required></textarea>
+
+      <select id="priority" required>
+        <option value="">-- Select Priority --</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+
+      <button type="submit">Submit Feedback</button>
+    </form>
+
+    <div class="feedback-list" id="feedbackList"></div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+
+    if (!token || localStorage.getItem('role') !== 'citizen') {
+      window.location.href = 'login.html';
+    }
+
+    document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const subject = document.getElementById('subject').value;
+      const message = document.getElementById('message').value;
+      const priority = document.getElementById('priority').value;
+
+      const response = await fetch('/feedback', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ subject, message, priority })
+      });
+
+      const data = await response.json();
+      alert(data.message);
+
+      if (data.success) {
+        loadMyFeedback();
+        fetchPublicFeedback();
+        document.getElementById('feedbackForm').reset();
+      }
+    });
+
+    async function loadMyFeedback() {
+      const response = await fetch('/my-feedback', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await response.json();
+      const list = document.getElementById('feedbackList');
+      list.innerHTML = '';
+
+      if (data.success && data.feedbacks.length > 0) {
+        data.feedbacks.forEach(item => {
+          const div = document.createElement('div');
+          div.className = 'feedback-item';
+          div.innerHTML = `
+            <strong>${item.subject}</strong><br>
+            <span class="priority">Priority: ${item.priority}</span><br>
+            <p>${item.message}</p>
+          `;
+          list.appendChild(div);
+        });
+      } else {
+        list.innerHTML = '<p>No feedback submitted yet.</p>';
+      }
+    }
+
+    async function fetchPublicFeedback() {
+      const res = await fetch('/public-feedback', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const list = document.getElementById('publicFeedbackList');
+      list.innerHTML = '';
+
+      if (data.success) {
+        data.feedbacks.forEach(fb => {
+          const card = document.createElement('div');
+          card.className = 'public-feedback-card';
+          const isUpvoted = fb.hasUpvoted; // from server, boolean
+          card.innerHTML = `
+            <h3><strong>${fb.subject}</strong></h3>
+            <p>${fb.message}</p>
+            <p class="priority">Priority: ${fb.priority}</p>
+            <p style="font-size: 14px;">By: ${fb.user_name}</p>
+            <p style="font-size: 14px;">Upvotes: <span id="upvotes-${fb.id}">${fb.upvotes}</span></p>
+            <button class="upvote-button" onclick="upvote(${fb.id}, this)" ${isUpvoted ? 'disabled' : ''}>${isUpvoted ? 'Upvoted' : 'Upvote'}</button>
+          `;
+          list.appendChild(card);
+        });
+      } else {
+        list.innerHTML = '<p>Failed to load public feedback.</p>';
+      }
+    }
+
+    async function upvote(id, button) {
+      button.disabled = true; // prevent double clicks immediately
+      const res = await fetch(`/upvote/${id}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        const upvoteCountElem = document.getElementById(`upvotes-${id}`);
+        upvoteCountElem.textContent = parseInt(upvoteCountElem.textContent) + 1;
+        button.textContent = 'Upvoted';
+      } else {
+        alert(data.message || 'Failed to upvote.');
+        button.disabled = false; // re-enable if failed
+      }
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = 'login.html';
+    }
+
+    window.onload = function () {
+      loadMyFeedback();
+      fetchPublicFeedback();
+    };
+  </script>
+  <!-- Chatbot Button -->
+<div id="chatbot-button" style="position: fixed; bottom: 20px; right: 20px; z-index: 999;">
+  <button onclick="toggleChatbot()" style="background-color: #007bff; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 30px; cursor: pointer;">
+    💬
+  </button>
+</div>
+
+<!-- Chatbot Window -->
+<div id="chatbot-window" style="display: none; position: fixed; bottom: 90px; right: 20px; width: 300px; height: 400px; background: white; border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000; overflow: hidden; display: flex; flex-direction: column;">
+  <div style="background-color: #007bff; color: white; padding: 10px; font-weight: bold;">Government Help Bot</div>
+  <div id="chatbot-messages" style="flex: 1; padding: 10px; overflow-y: auto; font-size: 14px;"></div>
+  <div style="padding: 10px; border-top: 1px solid #ccc;">
+    <input type="text" id="chatbot-input" placeholder="Ask something..." style="width: 80%; padding: 5px;" onkeydown="if(event.key === 'Enter') sendChatbotMessage()">
+    <button onclick="sendChatbotMessage()" style="padding: 5px 10px;">Send</button>
+  </div>
+</div>
+<script>
+  function toggleChatbot() {
+    const chatbotWindow = document.getElementById('chatbot-window');
+    chatbotWindow.style.display = chatbotWindow.style.display === 'none' ? 'flex' : 'none';
+  }
+
+  function sendChatbotMessage() {
+    const input = document.getElementById('chatbot-input');
+    const message = input.value.trim();
+    if (!message) return;
+
+    appendMessage('You', message);
+    input.value = '';
+
+    // Call backend (we’ll set up /api/chatbot soon)
+    fetch('http://localhost:3000/api/chatbot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message })
+    })
+    .then(res => res.json())
+    .then(data => {
+      appendMessage('Bot', data.reply || "Sorry, I don't understand.");
+    })
+    .catch(err => {
+      console.error(err);
+      appendMessage('Bot', "Error reaching server.");
+    });
+  }
+
+  function appendMessage(sender, text) {
+    const messages = document.getElementById('chatbot-messages');
+    const msg = document.createElement('div');
+    msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    msg.style.marginBottom = '10px';
+    messages.appendChild(msg);
+    messages.scrollTop = messages.scrollHeight;
+  }
+</script>
+
+</body>
+</html>
