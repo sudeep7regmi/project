@@ -4,240 +4,625 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Citizen Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
   <style>
+    /* Global Styles */
     * {
       box-sizing: border-box;
     }
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(120deg, #1e3c72, #2a5298);
+      background: linear-gradient(120deg, #2c3e50, #34495e); /* More vibrant dark blue-grey gradient */
       color: #fff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 15px;
     }
     .container {
-      max-width: 900px;
-      margin: 40px auto;
-      background: rgba(0, 0, 0, 0.8);
-      padding: 30px;
+      max-width: 1200px; /* Increased max-width for better two-column layout */
+      width: 100%;
+      background: rgba(25, 35, 45, 0.95); /* Darker, slightly blue-tinted background */
+      padding: 30px 35px 40px;
       border-radius: 16px;
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+      position: relative;
     }
     h1, h2 {
       text-align: center;
       margin-bottom: 20px;
+      font-weight: 600;
     }
+
+    /* Logout Button */
     .logout {
-      text-align: right;
+      position: absolute;
+      top: 20px;
+      right: 25px;
     }
     .logout button {
-      background-color: #e74c3c;
+      background-color: #e74c3c; /* Red */
       border: none;
       color: white;
       padding: 10px 16px;
       border-radius: 8px;
       font-size: 14px;
       cursor: pointer;
+      box-shadow: 0 4px 10px rgba(231, 76, 60, 0.6);
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      font-weight: 600;
+      user-select: none;
     }
+    .logout button:hover {
+      background-color: #c0392b; /* Darker Red on hover */
+      transform: scale(1.05);
+    }
+
+    /* Form Styles */
     form {
       display: grid;
       gap: 15px;
       margin-top: 20px;
     }
+    /* Reverted styling for select, textarea, input */
     select, textarea, input {
-      padding: 10px;
-      border-radius: 6px;
-      border: none;
+      padding: 12px 14px;
+      border-radius: 8px;
+      border: none; /* Reverted to no border */
       font-size: 16px;
+      font-family: 'Inter', sans-serif;
+      color: #222;
+      background: #f9f9f9; /* Reverted to lighter background */
+      transition: box-shadow 0.3s ease;
+      resize: vertical;
+      /* Removed appearance properties for default browser styling */
+    }
+
+    /* Removed specific styling for select element's custom arrow */
+    /* select {
+        background-image: none;
+        background-repeat: no-repeat;
+        background-position: initial;
+        padding-right: initial;
+    } */
+
+
+    select:focus, textarea:focus, input:focus {
+      outline: none;
+      border-color: initial; /* Reverted to initial */
+      box-shadow: 0 0 8px #0080ffaa; /* Vibrant blue shadow on focus (retained for consistency with overall theme) */
+      background: #fff;
     }
     button[type="submit"] {
-      background-color: #3498db;
+      background-color: #0080ff; /* Vibrant Azure Blue */
       color: white;
-      padding: 12px;
+      padding: 14px;
       font-size: 16px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      transition: background 0.3s ease;
+      font-weight: 600;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      user-select: none;
     }
     button[type="submit"]:hover {
-      background-color: #2980b9;
+      background-color: #0066cc; /* Darker Azure Blue on hover */
+      transform: scale(1.05);
     }
-    .feedback-list, #publicFeedbackList {
+
+    /* Feedback & Notice Lists */
+    .feedback-list, #publicFeedbackList, #noticeList {
       margin-top: 30px;
+      max-height: 350px;
+      overflow-y: auto;
+      padding-right: 10px;
+      scroll-behavior: smooth;
     }
-    .feedback-item, .public-feedback-card {
-      background-color: #2c3e50;
+
+    /* Custom Scrollbar for Lists */
+    .feedback-list::-webkit-scrollbar,
+    #publicFeedbackList::-webkit-scrollbar,
+    #noticeList::-webkit-scrollbar {
+      width: 10px;
+    }
+    .feedback-list::-webkit-scrollbar-track,
+    #publicFeedbackList::-webkit-scrollbar-track,
+    #noticeList::-webkit-scrollbar-track {
+      background: #2a3b4c; /* Darker track */
       border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 16px;
     }
+    .feedback-list::-webkit-scrollbar-thumb,
+    #publicFeedbackList::-webkit-scrollbar-thumb,
+    #noticeList::-webkit-scrollbar-thumb {
+      background: #0080ff; /* Vibrant blue thumb */
+      border-radius: 10px;
+    }
+
+    /* Feedback Item / Card Styles */
+    .feedback-item, .public-feedback-card {
+      background-color: #4a6078; /* Distinct blue-grey for cards */
+      border-radius: 12px;
+      padding: 18px 22px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+      transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s ease;
+      opacity: 0;
+      animation: fadeInUp 0.6s forwards;
+    }
+    .feedback-item:hover, .public-feedback-card:hover {
+      transform: scale(1.02);
+      box-shadow: 0 8px 20px rgba(0, 128, 255, 0.5); /* Vibrant blue shadow on hover */
+    }
+
+    /* Fade In Up Animation */
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Priority Indicator */
     .priority {
-      font-weight: bold;
-      color: #f1c40f;
+      font-weight: 700;
+      color: #f1c40f; /* Yellow (retained for contrast) */
+      margin-top: 6px;
+      display: inline-block;
     }
+
+    /* Upvote Button */
     .upvote-button {
-      margin-top: 8px;
-      padding: 8px 14px;
-      background-color: #1abc9c;
+      margin-top: 12px;
+      padding: 10px 18px;
+      background-color: #28a745; /* Vibrant Green */
       color: white;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
       cursor: pointer;
+      font-weight: 600;
+      box-shadow: 0 4px 14px rgba(40, 167, 69, 0.6);
+      transition: background-color 0.3s ease, transform 0.2s ease;
+      user-select: none;
+    }
+    .upvote-button:hover:not(:disabled) {
+      background-color: #218838; /* Darker Green on hover */
+      transform: scale(1.05);
     }
     .upvote-button:disabled {
       background-color: #7f8c8d;
       cursor: not-allowed;
+      box-shadow: none;
     }
+
+    /* Section Titles */
     .section-title {
-      font-size: 20px;
-      border-bottom: 2px solid #fff;
-      padding-bottom: 5px;
-      margin-bottom: 10px;
+      font-size: 22px;
+      font-weight: 700;
+      border-bottom: 2px solid #0080ff; /* Vibrant blue border */
+      padding-bottom: 6px;
+      margin-bottom: 12px;
+      text-align: center;
     }
+
+    /* Main content layout for modular sections */
+    .main-content-grid {
+        display: grid;
+        grid-template-columns: 1fr; /* Default to single column for small screens */
+        gap: 30px; /* Space between columns and rows */
+        margin-top: 30px;
+    }
+
+    @media (min-width: 768px) { /* Two columns for medium and larger screens */
+        .main-content-grid {
+            grid-template-columns: 1fr 1fr;
+            grid-template-areas:
+                "notices public"
+                "submit myfeedback";
+        }
+        #officialNotices { grid-area: notices; }
+        #publicFeedbackSection { grid-area: public; }
+        #submitFeedbackSection { grid-area: submit; }
+        #myFeedbackSection { grid-area: myfeedback; }
+    }
+
+    /* Individual section styling for modular look */
+    section {
+        background-color: rgba(44, 62, 80, 0.9); /* More distinct dark blue-grey */
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        margin-bottom: 20px; /* Space between stacked sections on mobile */
+    }
+    @media (min-width: 768px) {
+        section {
+            margin-bottom: 0; /* Remove extra margin when in grid */
+        }
+    }
+
+
+    /* Chatbot Floating Button & Panel Styles */
+    #chatbot-toggle {
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      width: 60px;
+      height: 60px;
+      background: #0080ff; /* Vibrant Azure Blue */
+      border-radius: 50%;
+      border: none;
+      cursor: pointer;
+      z-index: 1000;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      color: white;
+      font-size: 30px;
+      display: flex; /* Center the emoji */
+      align-items: center; /* Center the emoji */
+      justify-content: center; /* Center the emoji */
+      transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.3s ease;
+    }
+    #chatbot-toggle:hover {
+      transform: scale(1.1); /* Slightly enlarge on hover */
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3); /* Enhanced shadow */
+      background-color: #0066cc; /* Darker Azure Blue on hover */
+    }
+
+    #chatbot-window {
+      position: fixed;
+      bottom: 100px;
+      right: 25px;
+      width: 320px;
+      max-height: 420px;
+      background: #fefefe; /* light background instead of pure white */
+      border-radius: 12px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+      display: none; /* Hidden by default */
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 999;
+      font-family: 'Segoe UI', sans-serif; /* A clear, modern font for chat */
+      color: #222; /* dark text for readability */
+    }
+
+    #chatbot-header {
+      background: #0080ff; /* Vibrant Azure Blue */
+      padding: 10px;
+      color: white;
+      text-align: center;
+      font-weight: bold;
+      user-select: none;
+      border-top-left-radius: 12px; /* Match window border radius */
+      border-top-right-radius: 12px; /* Match window border radius */
+    }
+
+    #chatbot-messages {
+      flex: 1;
+      padding: 10px;
+      overflow-y: auto;
+      background: #f4f4f4; /* Light grey background for messages area */
+      font-size: 14px;
+      display: flex;
+      flex-direction: column;
+      /* Custom scrollbar for chatbot messages */
+      scrollbar-width: thin; /* Firefox */
+      scrollbar-color: #a0a0a0 #e0e0e0; /* Firefox */
+    }
+    /* Webkit scrollbar for chatbot messages */
+    #chatbot-messages::-webkit-scrollbar {
+      width: 8px; /* Slightly thinner scrollbar */
+    }
+    #chatbot-messages::-webkit-scrollbar-track {
+      background: #e0e0e0; /* Lighter track for the chatbot */
+      border-radius: 10px;
+    }
+    #chatbot-messages::-webkit-scrollbar-thumb {
+      background: #a0a0a0; /* Softer thumb color */
+      border-radius: 10px;
+    }
+
+    /* Chat message bubbles */
+    .chat-msg {
+      max-width: 75%;
+      padding: 10px 14px;
+      margin: 6px 0;
+      border-radius: 18px; /* More rounded corners for bubbles */
+      font-size: 14px;
+      white-space: pre-line; /* Preserve line breaks */
+      position: relative;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1); /* Subtle shadow for depth */
+      word-wrap: break-word; /* Ensure long words break */
+    }
+
+    .chat-user {
+      background-color: #90ee90; /* More vibrant Light Green for user messages */
+      color: #222; /* dark text */
+      align-self: flex-end; /* Align to the right */
+      border-bottom-right-radius: 4px; /* Keep one corner sharper for the user */
+    }
+
+    .chat-bot {
+      background-color: #e0e0e0; /* Light Grey for bot messages, softer than pure white */
+      color: #222; /* dark text */
+      align-self: flex-start; /* Align to the left */
+      border-bottom-left-radius: 4px; /* Keep one corner sharper for the bot */
+    }
+
+    .timestamp {
+      display: block;
+      font-size: 11px;
+      color: #666; /* slightly darker for readability */
+      text-align: right;
+      margin-top: 4px;
+      user-select: none;
+    }
+
+    /* Chat input area */
+    #chatbot-input-area {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+
+    #chatbot-input {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      font-size: 14px;
+      outline: none;
+      color: #222; /* input text color */
+    }
+    #chatbot-input::placeholder {
+      color: #888; /* Softer placeholder text color */
+      font-style: italic;
+    }
+
+    #chatbot-send {
+      background: #0080ff; /* Vibrant Azure Blue */
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+      font-weight: bold;
+      user-select: none;
+      transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    #chatbot-send:hover {
+      background: #0066cc; /* Darker Azure Blue on hover */
+      transform: translateY(-1px); /* Slight lift */
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* More pronounced shadow */
+    }
+
   </style>
 </head>
 <body>
   <div class="container">
     <div class="logout">
-      <button onclick="logout()">Logout</button>
+      <button onclick="logout()" aria-label="Logout">Logout</button>
     </div>
-    <h1>Citizen Dashboard</h1>
+    <header>
+        <h1>Citizen Dashboard</h1>
+    </header>
 
-    <h2 class="section-title">Public Feedback</h2>
-    <div id="publicFeedbackList"></div>
+    <main class="main-content-grid">
+        <section id="officialNotices">
+            <h2 class="section-title">Official Notices</h2>
+            <div id="noticeList" aria-live="polite" aria-busy="true">Loading notices...</div>
+        </section>
 
-    <h2 class="section-title">Submit New Feedback</h2>
-    <form id="feedbackForm">
-      <select id="subject" required>
-        <option value="">-- Select Subject --</option>
-        <option value="electricity">Electricity</option>
-        <option value="water supply">Water Supply</option>
-        <option value="transport management">Transport Management</option>
-        <option value="sanitation">Sanitation</option>
-        <option value="DAO/ civil registration">DAO/ Civil Registration</option>
-        <option value="health">Health</option>
-        <option value="CIAA">CIAA</option>
-        <option value="others">Others</option>
-      </select>
+        <section id="publicFeedbackSection">
+            <h2 class="section-title">Public Feedback</h2>
+            <div id="publicFeedbackList" aria-live="polite" aria-busy="true">Loading public feedback...</div>
+        </section>
 
-      <textarea id="message" rows="4" placeholder="Complaint/feedback..." required></textarea>
+        <section id="submitFeedbackSection">
+            <h2 class="section-title">Submit New Feedback</h2>
+            <form id="feedbackForm" aria-label="Submit New Feedback Form">
+              <select id="subject" required aria-required="true" aria-label="Select Subject">
+                <option value="">-- Select Subject --</option>
+                <option value="electricity">Electricity</option>
+                <option value="water supply">Water Supply</option>
+                <option value="transport management">Transport Management</option>
+                <option value="sanitation">Sanitation</option>
+                <option value="DAO/ civil registration">DAO/ Civil Registration</option>
+                <option value="health">Health</option>
+                <option value="CIAA">CIAA</option>
+                <option value="others">Others</option>
+              </select>
 
-      <select id="priority" required>
-        <option value="">-- Select Priority --</option>
-        <option value="high">High</option>
-        <option value="medium">Medium</option>
-        <option value="low">Low</option>
-      </select>
+              <textarea id="message" rows="4" placeholder="Complaint/feedback..." required aria-required="true" aria-label="Complaint or Feedback Message"></textarea>
 
-      <button type="submit">Submit Feedback</button>
-    </form>
+              <select id="priority" required aria-required="true" aria-label="Select Priority">
+                <option value="">-- Select Priority --</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
 
-    <div class="feedback-list" id="feedbackList"></div>
+              <button type="submit" aria-label="Submit Feedback">Submit Feedback</button>
+            </form>
+        </section>
+
+        <section id="myFeedbackSection">
+            <h2 class="section-title">Your Submitted Feedback</h2>
+            <div class="feedback-list" id="feedbackList" aria-live="polite" aria-busy="true">Loading your feedback...</div>
+        </section>
+    </main>
   </div>
 
   <script>
     const token = localStorage.getItem('token');
+    const role = localStorage.getItem('role');
 
-    if (!token || localStorage.getItem('role') !== 'citizen') {
+    if (!token || role !== 'citizen') {
       window.location.href = 'login.html';
     }
 
-    document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const subject = document.getElementById('subject').value;
-      const message = document.getElementById('message').value;
-      const priority = document.getElementById('priority').value;
-
-      const response = await fetch('/feedback', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ subject, message, priority })
-      });
-
-      const data = await response.json();
-      alert(data.message);
-
-      if (data.success) {
-        loadMyFeedback();
-        fetchPublicFeedback();
-        document.getElementById('feedbackForm').reset();
-      }
-    });
-
-    async function loadMyFeedback() {
-      const response = await fetch('/my-feedback', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await response.json();
-      const list = document.getElementById('feedbackList');
-      list.innerHTML = '';
-
-      if (data.success && data.feedbacks.length > 0) {
-        data.feedbacks.forEach(item => {
-          const div = document.createElement('div');
-          div.className = 'feedback-item';
-          div.innerHTML = `
-            <strong>${item.subject}</strong><br>
-            <span class="priority">Priority: ${item.priority}</span><br>
-            <p>${item.message}</p>
-          `;
-          list.appendChild(div);
+    async function fetchNotices() {
+      try {
+        const res = await fetch('/notices', {
+          headers: { Authorization: 'Bearer ' + token }
         });
-      } else {
-        list.innerHTML = '<p>No feedback submitted yet.</p>';
+        const data = await res.json();
+
+        const noticeList = document.getElementById('noticeList');
+        noticeList.setAttribute('aria-busy', 'false');
+        if (data.success && data.notices.length > 0) {
+          noticeList.innerHTML = '';
+          data.notices.forEach(n => {
+            const div = document.createElement('div');
+            div.className = 'public-feedback-card';
+            div.style.animationDelay = `${Math.random() * 0.3}s`;
+            div.innerHTML = `<h3><strong>${escapeHtml(n.title)}</strong></h3><p>${escapeHtml(n.content)}</p>`;
+            noticeList.appendChild(div);
+          });
+        } else {
+          noticeList.innerHTML = '<p>No notices available.</p>';
+        }
+      } catch (err) {
+        console.error('Error fetching notices:', err);
+        document.getElementById('noticeList').innerHTML = '<p>Error fetching notices.</p>';
       }
     }
 
     async function fetchPublicFeedback() {
-      const res = await fetch('/public-feedback', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      const data = await res.json();
-      const list = document.getElementById('publicFeedbackList');
-      list.innerHTML = '';
-
-      if (data.success) {
-        data.feedbacks.forEach(fb => {
-          const card = document.createElement('div');
-          card.className = 'public-feedback-card';
-          const isUpvoted = fb.hasUpvoted; // from server, boolean
-          card.innerHTML = `
-            <h3><strong>${fb.subject}</strong></h3>
-            <p>${fb.message}</p>
-            <p class="priority">Priority: ${fb.priority}</p>
-            <p style="font-size: 14px;">By: ${fb.user_name}</p>
-            <p style="font-size: 14px;">Upvotes: <span id="upvotes-${fb.id}">${fb.upvotes}</span></p>
-            <button class="upvote-button" onclick="upvote(${fb.id}, this)" ${isUpvoted ? 'disabled' : ''}>${isUpvoted ? 'Upvoted' : 'Upvote'}</button>
-          `;
-          list.appendChild(card);
+      try {
+        const res = await fetch('/public-feedback', {
+          headers: { Authorization: 'Bearer ' + token }
         });
-      } else {
-        list.innerHTML = '<p>Failed to load public feedback.</p>';
+        const data = await res.json();
+
+        const publicFeedbackList = document.getElementById('publicFeedbackList');
+        publicFeedbackList.setAttribute('aria-busy', 'false');
+        if (data.success && data.feedbacks.length > 0) {
+          publicFeedbackList.innerHTML = '';
+          data.feedbacks.forEach(fb => {
+            const card = document.createElement('div');
+            card.className = 'public-feedback-card';
+            card.style.animationDelay = `${Math.random() * 0.3}s`;
+            const isUpvoted = fb.hasUpvoted;
+            card.innerHTML = `
+              <h3><strong>${escapeHtml(fb.subject)}</strong></h3>
+              <p>${escapeHtml(fb.message)}</p>
+              <p class="priority">Priority: ${escapeHtml(fb.priority)}</p>
+              <p style="font-size: 14px;">By: ${escapeHtml(fb.user_name)}</p>
+              <p style="font-size: 14px;">Upvotes: <span id="upvotes-${fb.id}">${fb.upvotes}</span></p>
+              <button class="upvote-button" onclick="upvote(${fb.id}, this)" ${isUpvoted ? 'disabled' : ''}>${isUpvoted ? 'Upvoted' : 'Upvote'}</button>
+            `;
+            publicFeedbackList.appendChild(card);
+          });
+        } else {
+          publicFeedbackList.innerHTML = '<p>No public feedback available.</p>';
+        }
+      } catch (err) {
+        console.error('Error fetching public feedback:', err);
+        document.getElementById('publicFeedbackList').innerHTML = '<p>Error loading public feedback.</p>';
       }
     }
 
-    async function upvote(id, button) {
-      button.disabled = true; // prevent double clicks immediately
-      const res = await fetch(`/upvote/${id}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
+    async function loadMyFeedback() {
+      try {
+        const res = await fetch('/my-feedback', {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        const data = await res.json();
 
-      const data = await res.json();
+        const feedbackList = document.getElementById('feedbackList');
+        feedbackList.setAttribute('aria-busy', 'false');
 
-      if (res.ok && data.success) {
-        const upvoteCountElem = document.getElementById(`upvotes-${id}`);
-        upvoteCountElem.textContent = parseInt(upvoteCountElem.textContent) + 1;
-        button.textContent = 'Upvoted';
-      } else {
-        alert(data.message || 'Failed to upvote.');
-        button.disabled = false; // re-enable if failed
+        if (data.success && data.feedbacks.length > 0) {
+          feedbackList.innerHTML = '';
+          data.feedbacks.forEach(fb => {
+            const div = document.createElement('div');
+            div.className = 'feedback-item';
+            div.style.animationDelay = `${Math.random() * 0.3}s`;
+            div.innerHTML = `
+              <strong>${escapeHtml(fb.subject)}</strong><br>
+              <span class="priority">Priority: ${escapeHtml(fb.priority)}</span><br>
+              <p>${escapeHtml(fb.message)}</p>
+            `;
+            feedbackList.appendChild(div);
+          });
+        } else {
+          feedbackList.innerHTML = '<p>No feedback submitted yet.</p>';
+        }
+      } catch (err) {
+        console.error('Error loading feedback:', err);
+        document.getElementById('feedbackList').innerHTML = '<p>Error loading your feedback.</p>';
       }
+    }
+
+    document.getElementById('feedbackForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const subject = document.getElementById('subject').value.trim();
+      const message = document.getElementById('message').value.trim();
+      const priority = document.getElementById('priority').value;
+
+      if (!subject || !message || !priority) {
+        alert('Please fill in all fields.');
+        return;
+      }
+
+      try {
+        const res = await fetch('/feedback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ subject, message, priority })
+        });
+        const data = await res.json();
+
+        alert(data.message);
+        if (data.success) {
+          e.target.reset();
+          loadMyFeedback();
+          fetchPublicFeedback();
+        }
+      } catch (err) {
+        alert('Server error submitting feedback.');
+        console.error(err);
+      }
+    });
+
+    async function upvote(id, button) {
+      button.disabled = true;
+      try {
+        const res = await fetch('/upvote', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ feedbackId: id })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          const upvoteCountElem = document.getElementById(`upvotes-${id}`);
+          upvoteCountElem.textContent = parseInt(upvoteCountElem.textContent) + 1;
+          button.textContent = 'Upvoted';
+        } else {
+          alert(data.message || 'Failed to upvote.');
+          button.disabled = false;
+        }
+      } catch (err) {
+        alert('Error while upvoting.');
+        console.error(err);
+        button.disabled = false;
+      }
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text.replace(/&/g, '&amp;')
+                 .replace(/</g, '&lt;')
+                 .replace(/>/g, '&gt;')
+                 .replace(/"/g, '&quot;')
+                 .replace(/'/g, '&#039;');
     }
 
     function logout() {
@@ -245,66 +630,287 @@
       window.location.href = 'login.html';
     }
 
-    window.onload = function () {
-      loadMyFeedback();
+    window.onload = () => {
+      fetchNotices();
       fetchPublicFeedback();
+      loadMyFeedback();
     };
-  </script>
-  <!-- Chatbot Button -->
-<div id="chatbot-button" style="position: fixed; bottom: 20px; right: 20px; z-index: 999;">
-  <button onclick="toggleChatbot()" style="background-color: #007bff; color: white; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 30px; cursor: pointer;">
-    💬
-  </button>
-</div>
+    function toggleChatbot() {
+  const panel = document.getElementById('chatbotPanel');
+  panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+}
 
-<!-- Chatbot Window -->
-<div id="chatbot-window" style="display: none; position: fixed; bottom: 90px; right: 20px; width: 300px; height: 400px; background: white; border: 1px solid #ccc; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); z-index: 1000; overflow: hidden; display: flex; flex-direction: column;">
-  <div style="background-color: #007bff; color: white; padding: 10px; font-weight: bold;">Government Help Bot</div>
-  <div id="chatbot-messages" style="flex: 1; padding: 10px; overflow-y: auto; font-size: 14px;"></div>
-  <div style="padding: 10px; border-top: 1px solid #ccc;">
-    <input type="text" id="chatbot-input" placeholder="Ask something..." style="width: 80%; padding: 5px;" onkeydown="if(event.key === 'Enter') sendChatbotMessage()">
-    <button onclick="sendChatbotMessage()" style="padding: 5px 10px;">Send</button>
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const messages = document.getElementById('chatbotMessages');
+  const text = input.value.trim();
+
+  if (!text) return;
+
+  // Display user message
+  const userMsg = document.createElement('div');
+  userMsg.className = 'user';
+  userMsg.textContent = text;
+  messages.appendChild(userMsg);
+  messages.scrollTop = messages.scrollHeight;
+
+  input.value = '';
+  
+  try {
+    const res = await fetch('/api/chatbot', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ message: text })
+    });
+
+    const data = await res.json();
+
+    const botMsg = document.createElement('div');
+    botMsg.className = 'bot';
+    botMsg.textContent = data.reply || 'No response.';
+    messages.appendChild(botMsg);
+    messages.scrollTop = messages.scrollHeight;
+
+  } catch (err) {
+    const errorMsg = document.createElement('div');
+    errorMsg.className = 'bot';
+    errorMsg.textContent = 'Error connecting to chatbot.';
+    messages.appendChild(errorMsg);
+    messages.scrollTop = messages.scrollHeight;
+    console.error(err);
+  }
+}
+
+  </script>
+  <!-- Chatbot Floating Button & Panel -->
+  <style>
+
+  #chatbot-toggle {
+    position: fixed;
+    bottom: 25px;
+    right: 25px;
+    width: 60px;
+    height: 60px;
+    background: #007bff;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    z-index: 1000;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    color: white;
+    font-size: 30px;
+  }
+
+  #chatbot-window {
+    position: fixed;
+    bottom: 100px;
+    right: 25px;
+    width: 320px;
+    max-height: 420px;
+    background: #fefefe; /* light background instead of pure white */
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    z-index: 999;
+    font-family: 'Segoe UI', sans-serif;
+    color: #222; /* dark text for readability */
+  }
+
+  #chatbot-header {
+    background: #007bff;
+    padding: 10px;
+    color: white;
+    text-align: center;
+    font-weight: bold;
+    user-select: none;
+  }
+
+  #chatbot-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background: #f4f4f4;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .chat-msg {
+    max-width: 75%;
+    padding: 10px 14px;
+    margin: 6px 0;
+    border-radius: 12px;
+    font-size: 14px;
+    white-space: pre-line;
+    position: relative;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    word-wrap: break-word;
+  }
+
+  .chat-user {
+    background-color: #dcf8c6;
+    color: #222; /* dark text */
+    align-self: flex-end;
+    border-bottom-right-radius: 0;
+  }
+
+  .chat-bot {
+    background-color: #ffffff;
+    color: #222; /* dark text */
+    align-self: flex-start;
+    border-bottom-left-radius: 0;
+  }
+
+  .timestamp {
+    display: block;
+    font-size: 11px;
+    color: #666; /* slightly darker for readability */
+    text-align: right;
+    margin-top: 4px;
+    user-select: none;
+  }
+
+  #chatbot-input-area {
+    display: flex;
+    border-top: 1px solid #ccc;
+  }
+
+  #chatbot-input {
+    flex: 1;
+    border: none;
+    padding: 10px;
+    font-size: 14px;
+    outline: none;
+    color: #222; /* input text color */
+  }
+
+  #chatbot-send {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-weight: bold;
+    user-select: none;
+  }
+</style>
+
+<!-- Chatbot toggle button -->
+<button id="chatbot-toggle">💬</button>
+
+<!-- Chatbot floating window -->
+<div id="chatbot-window">
+  <div id="chatbot-header">Ask GovtBot</div>
+  <div id="chatbot-messages">
+    <div class="chat-msg chat-bot">
+      Hello! How can I assist you today?
+      <span class="timestamp"></span>
+    </div>
+  </div>
+  <div id="chatbot-input-area">
+    <input type="text" id="chatbot-input" placeholder="Type a message..." />
+    <button id="chatbot-send">Send</button>
   </div>
 </div>
+
 <script>
-  function toggleChatbot() {
-    const chatbotWindow = document.getElementById('chatbot-window');
-    chatbotWindow.style.display = chatbotWindow.style.display === 'none' ? 'flex' : 'none';
-  }
+  const toggleBtn = document.getElementById('chatbot-toggle');
+  const chatWindow = document.getElementById('chatbot-window');
+  const inputField = document.getElementById('chatbot-input');
+  const sendBtn = document.getElementById('chatbot-send');
+  const messages = document.getElementById('chatbot-messages');
 
-  function sendChatbotMessage() {
-    const input = document.getElementById('chatbot-input');
-    const message = input.value.trim();
-    if (!message) return;
+  toggleBtn.addEventListener('click', () => {
+    chatWindow.style.display = chatWindow.style.display === 'flex' ? 'none' : 'flex';
+    if(chatWindow.style.display === 'flex') {
+      inputField.focus();
+    }
+  });
 
-    appendMessage('You', message);
-    input.value = '';
+  sendBtn.addEventListener('click', sendMessage);
+  inputField.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') sendMessage();
+  });
 
-    // Call backend (we’ll set up /api/chatbot soon)
-    fetch('http://localhost:3000/api/chatbot', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message })
-    })
-    .then(res => res.json())
-    .then(data => {
-      appendMessage('Bot', data.reply || "Sorry, I don't understand.");
-    })
-    .catch(err => {
+  async function sendMessage() {
+    const msg = inputField.value.trim();
+    if (!msg) return;
+
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // User message bubble
+    messages.innerHTML += `
+      <div class="chat-msg chat-user">
+        ${escapeHtml(msg)}
+        <span class="timestamp">${time}</span>
+      </div>
+    `;
+    inputField.value = '';
+    messages.scrollTop = messages.scrollHeight;
+
+    // Bot typing indicator
+    messages.innerHTML += `
+      <div class="chat-msg chat-bot" id="loading">
+        Typing...
+        <span class="timestamp">${time}</span>
+      </div>
+    `;
+    messages.scrollTop = messages.scrollHeight;
+
+    try {
+      const res = await fetch('/api/chatbot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: msg })
+      });
+
+      const data = await res.json();
+      document.getElementById('loading').remove();
+
+      const replyLines = data.reply.split(/\n+/).filter(line => line.trim() !== '');
+      const formattedReply = replyLines.map(line => `<div>${escapeHtml(line.trim())}</div>`).join('');
+
+      const botTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      messages.innerHTML += `
+        <div class="chat-msg chat-bot">
+          ${formattedReply}
+          <span class="timestamp">${botTime}</span>
+        </div>
+      `;
+
+    } catch (err) {
+      document.getElementById('loading').remove();
+      messages.innerHTML += `
+        <div class="chat-msg chat-bot">
+          ⚠️ Error connecting to chatbot.
+          <span class="timestamp">${time}</span>
+        </div>
+      `;
       console.error(err);
-      appendMessage('Bot', "Error reaching server.");
-    });
-  }
+    }
 
-  function appendMessage(sender, text) {
-    const messages = document.getElementById('chatbot-messages');
-    const msg = document.createElement('div');
-    msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
-    msg.style.marginBottom = '10px';
-    messages.appendChild(msg);
     messages.scrollTop = messages.scrollHeight;
   }
+
+  // Helper to escape HTML special chars to prevent injection
+  function escapeHtml(text) {
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 </script>
+
+
+
 
 </body>
 </html>
