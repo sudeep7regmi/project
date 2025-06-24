@@ -1,80 +1,165 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="scroll-smooth">
 <head>
   <meta charset="UTF-8" />
-  <title>Government Feedback System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Government Feedback System - Your Voice Matters</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts - Inter (preferred for Tailwind) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
-    body, html {
-      height: 100%;
-      margin: 0;
-      font-family: 'Roboto', sans-serif;
-      color: #fff;
+    /* Custom styles for background and overlay, and to override some Tailwind defaults if needed */
+    body {
+      font-family: 'Inter', sans-serif; /* Using Inter for consistency with Tailwind projects */
       background: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
       background-size: cover;
+      color: #fff; /* Default text color for body */
+    }
+    .overlay {
+      background-color: rgba(0,0,0,0.7); /* Slightly darker overlay for better contrast */
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: -1; /* Ensure overlay is behind content */
+    }
+    /* Specific styling for sections to ensure proper padding and min-height */
+    section {
+        min-height: 80vh; /* Ensure sections take up substantial vertical space */
+        padding: 4rem 1rem; /* Default padding for all sections */
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+
+    /* Adjusting the hero section's specific height */
+    #hero {
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
     }
-    .overlay {
-      background-color: rgba(0,0,0,0.6);
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      z-index: 0;
+
+    .glassmorphism {
+        background: rgba(255, 255, 255, 0.1); /* Lighter background for a glass effect */
+        backdrop-filter: blur(10px); /* Blur effect */
+        -webkit-backdrop-filter: blur(10px); /* Safari support */
+        border: 1px solid rgba(255, 255, 255, 0.2); /* Light border */
     }
-    .container {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      max-width: 500px;
-      padding: 40px;
-      background: rgba(0,0,0,0.7);
-      border-radius: 12px;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-    }
-    h1 {
-      font-weight: 700;
-      margin-bottom: 20px;
-      font-size: 2.5rem;
-    }
-    p {
-      font-size: 1.2rem;
-      margin-bottom: 30px;
-      line-height: 1.4;
-    }
-    .btn {
-      display: inline-block;
-      padding: 12px 30px;
-      margin: 0 10px;
-      background-color: #007bff;
-      color: white;
-      text-decoration: none;
-      font-weight: 600;
-      border-radius: 6px;
-      transition: background-color 0.3s ease;
-    }
-    .btn:hover {
-      background-color: #0056b3;
-    }
-    footer {
-      position: fixed;
-      bottom: 15px;
-      width: 100%;
-      text-align: center;
-      color: #bbb;
-      font-size: 0.9rem;
-      font-style: italic;
+
+    /* Smooth scroll behavior is enabled on the html tag */
+    html {
+      scroll-behavior: smooth;
     }
   </style>
 </head>
-<body>
+<body class="bg-gray-900 text-gray-100 antialiased">
   <div class="overlay"></div>
-  <div class="container">
-    <h1>Welcome to Government Feedback System</h1>
-    <p>Your voice matters. Register as a citizen to submit your feedback and complaints, or log in if you already have an account.</p>
-    <a href="register.html" class="btn">Register</a>
-    <a href="login.html" class="btn">Login</a>
-  </div>
-  <footer>© 2025 Local Government Portal</footer>
+
+  <!-- Sticky Navigation Bar -->
+  <nav class="sticky top-0 z-50 w-full bg-gray-900 bg-opacity-80 backdrop-blur-md shadow-lg p-4 flex justify-center space-x-6 rounded-b-lg">
+    <a href="#hero" class="text-lg font-medium text-white hover:text-blue-400 transition duration-300">Home</a>
+    <a href="#about" class="text-lg font-medium text-white hover:text-blue-400 transition duration-300">About Us</a>
+    <a href="#how-it-works" class="text-lg font-medium text-white hover:text-blue-400 transition duration-300">How it Works</a>
+    <a href="#benefits" class="text-lg font-medium text-white hover:text-blue-400 transition duration-300">Benefits</a>
+    <a href="#contact" class="text-lg font-medium text-white hover:text-blue-400 transition duration-300">Get Started</a>
+  </nav>
+
+  <!-- Hero Section (Original Content) -->
+  <section id="hero" class="relative w-full h-screen flex items-center justify-center text-center px-4">
+    <div class="max-w-xl p-8 rounded-xl glassmorphism shadow-2xl mx-auto">
+      <h1 class="text-5xl md:text-6xl font-extrabold mb-4 leading-tight">Welcome to Government Feedback System</h1>
+      <p class="text-xl md:text-2xl mb-8 leading-relaxed text-gray-200">Your voice matters. Register as a citizen to submit your feedback and complaints, or log in if you already have an account.</p>
+      <div class="flex flex-col sm:flex-row justify-center gap-4">
+        <a href="register.html" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Register</a>
+        <a href="login.html" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Login</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- About Us Section -->
+  <section id="about" class="w-full bg-gray-800 bg-opacity-70 text-center py-20 px-4">
+    <div class="max-w-4xl mx-auto p-8 rounded-xl glassmorphism shadow-2xl">
+      <h2 class="text-4xl md:text-5xl font-bold mb-6">About Our System</h2>
+      <p class="text-lg md:text-xl leading-relaxed text-gray-200 mb-6">The Government Feedback System is designed to bridge the gap between citizens and their local government. We believe in transparent governance and the power of public opinion to drive positive change.</p>
+      <p class="text-lg md:text-xl leading-relaxed text-gray-200">Our platform provides a secure and easy-to-use channel for you to submit various types of feedback, including suggestions for improvement, reports of issues, and direct complaints. Your submissions are directed to the relevant government departments, ensuring your voice is heard and acted upon.</p>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section id="how-it-works" class="w-full bg-gray-900 bg-opacity-70 text-center py-20 px-4">
+    <div class="max-w-4xl mx-auto p-8 rounded-xl glassmorphism shadow-2xl">
+      <h2 class="text-4xl md:text-5xl font-bold mb-12">How It Works</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-gray-200">
+        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600">
+          <svg class="w-16 h-16 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM12 14c-1.474-1.285-2.937-2.457-3.95-3.376M21 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2a2 2 0 002 2h14a2 2 0 002-2z"></path></svg>
+          <h3 class="text-2xl font-semibold mb-3">1. Register/Login</h3>
+          <p>Create a new account or log in with your existing credentials to access the feedback submission portal.</p>
+        </div>
+        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600">
+          <svg class="w-16 h-16 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          <h3 class="text-2xl font-semibold mb-3">2. Submit Feedback</h3>
+          <p>Fill out our simple form with your suggestions, complaints, or reports. Attach files if necessary.</p>
+        </div>
+        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600">
+          <svg class="w-16 h-16 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+          <h3 class="2xl font-semibold mb-3">3. Track & Engage</h3>
+          <p>Monitor the status of your submission and receive updates from the relevant government department.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Benefits Section -->
+  <section id="benefits" class="w-full bg-gray-800 bg-opacity-70 text-center py-20 px-4">
+    <div class="max-w-4xl mx-auto p-8 rounded-xl glassmorphism shadow-2xl">
+      <h2 class="text-4xl md:text-5xl font-bold mb-12">Benefits of Using Our System</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-200">
+        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600 flex items-start text-left">
+          <svg class="w-8 h-8 mr-4 mt-1 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <div>
+            <h3 class="text-2xl font-semibold mb-2">Direct Communication</h3>
+            <p>Your feedback goes directly to the appropriate government officials, ensuring your concerns are addressed efficiently.</p>
+          </div>
+        </div>
+        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600 flex items-start text-left">
+          <svg class="w-8 h-8 mr-4 mt-1 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0v4m-8 0h8m-8 0H8m7 3ddddddddd7 0a4 4 0 11-8 0 4 4 0 018 0zM12 14v4m0 0h4m-4 0H8"></path></svg>
+          <div>
+            <h3 class="text-2xl font-semibold mb-2">Increased Transparency</h3>
+            <p>Track the status of your submissions and see how your feedback contributes to community improvements.</p>
+          </div>
+        </div>
+        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600 flex items-start text-left">
+          <svg class="w-8 h-8 mr-4 mt-1 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          <div>
+            <h3 class="text-2xl font-semibold mb-2">Community Impact</h3>
+            <p>Your contributions help identify areas for improvement, leading to a better living environment for everyone.</p>
+          </div>
+        </div>
+        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600 flex items-start text-left">
+          <svg class="w-8 h-8 mr-4 mt-1 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+          <div>
+            <h3 class="text-2xl font-semibold mb-2">Enhanced Efficiency</h3>
+            <p>Streamlined feedback submission and tracking processes save time for both citizens and government bodies.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action Section -->
+  <section id="contact" class="w-full bg-gray-900 bg-opacity-70 text-center py-20 px-4">
+    <div class="max-w-xl p-8 rounded-xl glassmorphism shadow-2xl mx-auto">
+      <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Make a Difference?</h2>
+      <p class="text-xl md:text-2xl mb-8 leading-relaxed text-gray-200">Join our community and help shape a better future for everyone. Your input is invaluable!</p>
+      <!-- Removed duplicate Register/Login buttons from here -->
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="w-full py-6 text-center text-gray-400 text-sm bg-gray-900 bg-opacity-80 rounded-t-lg">
+    © 2025 Local Government Portal. All rights reserved.
+  </footer>
 </body>
 </html>
