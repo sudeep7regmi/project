@@ -1,5 +1,4 @@
 require('dotenv').config();
-console.log(process.env.OPENAI_API_KEY)
 const express = require('express');
 const cors = require('cors');
 const mysql = require('mysql2/promise');
@@ -7,11 +6,6 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const path = require('path');
 const crypto = require('crypto');
-const OpenAI = require('openai');
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 
 
 const app = express();
@@ -35,6 +29,7 @@ async function getDBConnection() {
   return await mysql.createConnection(dbConfig);
 }
 
+
 // Middleware to verify JWT token
 function authenticateToken(req, res, next) {
   const authHeader = req.headers['authorization'];
@@ -52,7 +47,6 @@ function authenticateToken(req, res, next) {
   });
 }
 
-// Middleware to authorize specific roles
 function authorizeRoles(...allowedRoles) {
   return (req, res, next) => {
     if (!allowedRoles.includes(req.user.role)) {
@@ -64,16 +58,12 @@ function authorizeRoles(...allowedRoles) {
   };
 }
 
-// OpenAI setup
-
-
-
 // ========== Routes ==========
 
 // Register new citizen
 app.post('/register', async (req, res) => {
   const { name, email, password } = req.body;
-  const role = 'citizen';
+  const role = 'citizen'; 
 
   if (!name || !email || !password)
     return res
@@ -147,20 +137,19 @@ app.post('/login', async (req, res) => {
   }
 });
 
-// ========== Feedback routes ==========
-
-// Citizen submits feedback
+// Citizen submits feedback (with priority fix)
 app.post('/feedback', authenticateToken, authorizeRoles('citizen'), async (req, res) => {
   const { subject, message, priority } = req.body;
   const validPriorities = ['low', 'medium', 'high'];
 
-  if (!subject || !message)
-    return res
-      .status(400)
-      .json({ success: false, message: 'Subject and message are required' });
+  if (!subject || !message || !priority)
+    return res.status(400).json({
+      success: false,
+      message: 'Subject, message, and priority are required'
+    });
 
-  if (priority && !validPriorities.includes(priority.toLowerCase()))
-    return res.status(400).json({ success: false, message: 'Invalid priority value' });
+  if (!validPriorities.includes(priority.toLowerCase()))
+    return res.status(400).json({ success: false, message: 'Priority must be low, medium, or high' });
 
   let connection;
   try {
@@ -168,7 +157,7 @@ app.post('/feedback', authenticateToken, authorizeRoles('citizen'), async (req, 
 
     await connection.execute(
       'INSERT INTO feedback (user_id, subject, message, priority) VALUES (?, ?, ?, ?)',
-      [req.user.id, subject, message, priority ? priority.toLowerCase() : 'medium']
+      [req.user.id, subject, message, priority.toLowerCase()]
     );
 
     res.json({ success: true, message: 'Feedback submitted successfully' });
@@ -204,291 +193,242 @@ app.get('/feedback', authenticateToken, authorizeRoles('admin'), async (req, res
 });
 
 // Citizen views own feedback
-app.get(
-  '/my-feedback',
-  authenticateToken,
-  authorizeRoles('citizen'),
-  async (req, res) => {
-    let connection;
-    try {
-      connection = await getDBConnection();
+app.get('/my-feedback', authenticateToken, authorizeRoles('citizen'), async (req, res) => {
+  let connection;
+  try {
+    connection = await getDBConnection();
 
-      const [feedbacks] = await connection.execute(
-        'SELECT * FROM feedback WHERE user_id = ? ORDER BY id DESC',
-        [req.user.id]
-      );
+    const [feedbacks] = await connection.execute(
+      'SELECT * FROM feedback WHERE user_id = ? ORDER BY id DESC',
+      [req.user.id]
+    );
 
-      res.json({ success: true, feedbacks });
-    } catch (error) {
-      console.error('Get My Feedback Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    } finally {
-      if (connection) await connection.end();
-    }
+    res.json({ success: true, feedbacks });
+  } catch (error) {
+    console.error('Get My Feedback Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  } finally {
+    if (connection) await connection.end();
   }
-);
+});
 
 // Citizen views all public feedback with upvote info
-app.get(
-  '/public-feedback',
-  authenticateToken,
-  authorizeRoles('citizen'),
-  async (req, res) => {
-    let connection;
-    try {
-      connection = await getDBConnection();
+app.get('/public-feedback', authenticateToken, authorizeRoles('citizen'), async (req, res) => {
+  let connection;
+  try {
+    connection = await getDBConnection();
 
-      const [feedbacks] = await connection.execute(
-        `SELECT f.*, u.name AS user_name,
-         (SELECT COUNT(*) FROM upvotes up WHERE up.feedback_id = f.id) AS upvotes_count
-         FROM feedback f
-         JOIN users u ON f.user_id = u.id
-         ORDER BY f.id DESC`
-      );
+    const [feedbacks] = await connection.execute(
+      `SELECT f.*, u.name AS user_name,
+       (SELECT COUNT(*) FROM upvotes up WHERE up.feedback_id = f.id) AS upvotes_count
+       FROM feedback f
+       JOIN users u ON f.user_id = u.id
+       ORDER BY f.id DESC`
+    );
 
-      // Add whether current user has upvoted each feedback
-      const feedbacksWithUpvoteInfo = await Promise.all(
-        feedbacks.map(async (fb) => {
-          const [upvoted] = await connection.execute(
-            'SELECT * FROM upvotes WHERE user_id = ? AND feedback_id = ?',
-            [req.user.id, fb.id]
-          );
-          return {
-            ...fb,
-            hasUpvoted: upvoted.length > 0,
-            upvotes: fb.upvotes_count || 0,
-          };
-        })
-      );
+    // Add whether current user has upvoted each feedback
+    const feedbacksWithUpvoteInfo = await Promise.all(
+      feedbacks.map(async (fb) => {
+        const [upvoted] = await connection.execute(
+          'SELECT * FROM upvotes WHERE user_id = ? AND feedback_id = ?',
+          [req.user.id, fb.id]
+        );
+        return {
+          ...fb,
+          hasUpvoted: upvoted.length > 0,
+          upvotes: fb.upvotes_count || 0,
+        };
+      })
+    );
 
-      res.json({ success: true, feedbacks: feedbacksWithUpvoteInfo });
-    } catch (error) {
-      console.error('Public Feedback Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    } finally {
-      if (connection) await connection.end();
-    }
+    res.json({ success: true, feedbacks: feedbacksWithUpvoteInfo });
+  } catch (error) {
+    console.error('Public Feedback Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  } finally {
+    if (connection) await connection.end();
   }
-);
+});
 
 // Admin deletes feedback
-app.delete(
-  '/feedback/:id',
-  authenticateToken,
-  authorizeRoles('admin'),
-  async (req, res) => {
-    const feedbackId = req.params.id;
-    let connection;
-    try {
-      connection = await getDBConnection();
+app.delete('/feedback/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  const feedbackId = req.params.id;
+  let connection;
+  try {
+    connection = await getDBConnection();
 
-      await connection.execute('DELETE FROM feedback WHERE id = ?', [feedbackId]);
+    await connection.execute('DELETE FROM feedback WHERE id = ?', [feedbackId]);
 
-      res.json({ success: true, message: 'Feedback deleted successfully' });
-    } catch (error) {
-      console.error('Delete Feedback Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    } finally {
-      if (connection) await connection.end();
-    }
+    res.json({ success: true, message: 'Feedback deleted successfully' });
+  } catch (error) {
+    console.error('Delete Feedback Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  } finally {
+    if (connection) await connection.end();
   }
-);
+});
 
 // Admin updates feedback
-app.put(
-  '/feedback/:id',
-  authenticateToken,
-  authorizeRoles('admin'),
-  async (req, res) => {
-    const feedbackId = req.params.id;
-    const { subject, message, priority } = req.body;
-    const validPriorities = ['low', 'medium', 'high'];
+app.put('/feedback/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  const feedbackId = req.params.id;
+  const { subject, message, priority } = req.body;
+  const validPriorities = ['low', 'medium', 'high'];
 
-    if (!subject || !message || !priority)
-      return res.status(400).json({
-        success: false,
-        message: 'Subject, message, and priority are required',
-      });
+  if (!subject || !message || !priority)
+    return res.status(400).json({
+      success: false,
+      message: 'Subject, message, and priority are required',
+    });
 
-    if (!validPriorities.includes(priority.toLowerCase()))
-      return res.status(400).json({ success: false, message: 'Invalid priority value' });
+  if (!validPriorities.includes(priority.toLowerCase()))
+    return res.status(400).json({ success: false, message: 'Priority must be low, medium, or high' });
 
-    let connection;
-    try {
-      connection = await getDBConnection();
+  let connection;
+  try {
+    connection = await getDBConnection();
 
-      await connection.execute(
-        'UPDATE feedback SET subject = ?, message = ?, priority = ? WHERE id = ?',
-        [subject, message, priority.toLowerCase(), feedbackId]
-      );
+    await connection.execute(
+      'UPDATE feedback SET subject = ?, message = ?, priority = ? WHERE id = ?',
+      [subject, message, priority.toLowerCase(), feedbackId]
+    );
 
-      res.json({ success: true, message: 'Feedback updated successfully' });
-    } catch (error) {
-      console.error('Update Feedback Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    } finally {
-      if (connection) await connection.end();
-    }
+    res.json({ success: true, message: 'Feedback updated successfully' });
+  } catch (error) {
+    console.error('Update Feedback Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  } finally {
+    if (connection) await connection.end();
   }
-);
+});
 
 // Citizen upvotes feedback
-app.post(
-  '/upvote',
-  authenticateToken,
-  authorizeRoles('citizen'),
-  async (req, res) => {
-    const { feedbackId } = req.body;
-    if (!feedbackId)
+app.post('/upvote', authenticateToken, authorizeRoles('citizen'), async (req, res) => {
+  const { feedbackId } = req.body;
+  if (!feedbackId)
+    return res
+      .status(400)
+      .json({ success: false, message: 'Feedback ID is required' });
+
+  let connection;
+  try {
+    connection = await getDBConnection();
+
+    // Check if already upvoted
+    const [existing] = await connection.execute(
+      'SELECT * FROM upvotes WHERE user_id = ? AND feedback_id = ?',
+      [req.user.id, feedbackId]
+    );
+
+    if (existing.length > 0)
       return res
         .status(400)
-        .json({ success: false, message: 'Feedback ID is required' });
+        .json({ success: false, message: 'You already upvoted this feedback' });
 
-    let connection;
-    try {
-      connection = await getDBConnection();
+    await connection.execute(
+      'INSERT INTO upvotes (user_id, feedback_id) VALUES (?, ?)',
+      [req.user.id, feedbackId]
+    );
 
-      // Check if already upvoted
-      const [existing] = await connection.execute(
-        'SELECT * FROM upvotes WHERE user_id = ? AND feedback_id = ?',
-        [req.user.id, feedbackId]
-      );
-
-      if (existing.length > 0)
-        return res
-          .status(400)
-          .json({ success: false, message: 'You already upvoted this feedback' });
-
-      await connection.execute(
-        'INSERT INTO upvotes (user_id, feedback_id) VALUES (?, ?)',
-        [req.user.id, feedbackId]
-      );
-
-      res.json({ success: true, message: 'Upvoted successfully' });
-    } catch (error) {
-      console.error('Upvote Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    } finally {
-      if (connection) await connection.end();
-    }
+    res.json({ success: true, message: 'Upvoted successfully' });
+  } catch (error) {
+    console.error('Upvote Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  } finally {
+    if (connection) await connection.end();
   }
-);
-
-// ========== Notices routes ==========
+});
 
 // Admin posts notice
-app.post(
-  '/notices',
-  authenticateToken,
-  authorizeRoles('admin'),
-  async (req, res) => {
-    const { title, content } = req.body;
+app.post('/notices', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  const { title, content } = req.body;
 
-    if (!title || !content)
-      return res
-        .status(400)
-        .json({ success: false, message: 'Title and content are required' });
+  if (!title || !content)
+    return res
+      .status(400)
+      .json({ success: false, message: 'Title and content are required' });
 
-    let connection;
-    try {
-      connection = await getDBConnection();
+  let connection;
+  try {
+    connection = await getDBConnection();
 
-      await connection.execute('INSERT INTO notices (title, content) VALUES (?, ?)', [
-        title,
-        content,
-      ]);
+    await connection.execute('INSERT INTO notices (title, content) VALUES (?, ?)', [
+      title,
+      content,
+    ]);
 
-      res.json({ success: true, message: 'Notice posted successfully' });
-    } catch (error) {
-      console.error('Post Notice Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    } finally {
-      if (connection) await connection.end();
-    }
+    res.json({ success: true, message: 'Notice posted successfully' });
+  } catch (error) {
+    console.error('Post Notice Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  } finally {
+    if (connection) await connection.end();
   }
-);
+});
 
 // Citizen gets notices
-app.get(
-  '/notices',
-  authenticateToken,
-  authorizeRoles('admin','citizen'),
-  async (req, res) => {
-    let connection;
-    try {
-      connection = await getDBConnection();
+app.get('/notices', authenticateToken, authorizeRoles('admin','citizen'), async (req, res) => {
+  let connection;
+  try {
+    connection = await getDBConnection();
 
-      const [notices] = await connection.execute(
-        'SELECT * FROM notices ORDER BY id DESC'
-      );
+    const [notices] = await connection.execute(
+      'SELECT * FROM notices ORDER BY id DESC'
+    );
 
-      res.json({ success: true, notices });
-    } catch (error) {
-      console.error('Get Notices Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    } finally {
-      if (connection) await connection.end();
-    }
+    res.json({ success: true, notices });
+  } catch (error) {
+    console.error('Get Notices Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  } finally {
+    if (connection) await connection.end();
   }
-);
+});
 
 // Admin updates notice
-app.put(
-  '/notices/:id',
-  authenticateToken,
-  authorizeRoles('admin'),
-  async (req, res) => {
-    const noticeId = req.params.id;
-    const { title, content } = req.body;
+app.put('/notices/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  const noticeId = req.params.id;
+  const { title, content } = req.body;
 
-    if (!title || !content)
-      return res
-        .status(400)
-        .json({ success: false, message: 'Title and content are required' });
+  if (!title || !content)
+    return res
+      .status(400)
+      .json({ success: false, message: 'Title and content are required' });
 
-    let connection;
-    try {
-      connection = await getDBConnection();
+  let connection;
+  try {
+    connection = await getDBConnection();
 
-      await connection.execute(
-        'UPDATE notices SET title = ?, content = ? WHERE id = ?',
-        [title, content, noticeId]
-      );
+    await connection.execute(
+      'UPDATE notices SET title = ?, content = ? WHERE id = ?',
+      [title, content, noticeId]
+    );
 
-      res.json({ success: true, message: 'Notice updated successfully' });
-    } catch (error) {
-      console.error('Update Notice Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    } finally {
-      if (connection) await connection.end();
-    }
+    res.json({ success: true, message: 'Notice updated successfully' });
+  } catch (error) {
+    console.error('Update Notice Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  } finally {
+    if (connection) await connection.end();
   }
-);
+});
 
 // Admin deletes notice
-app.delete(
-  '/notices/:id',
-  authenticateToken,
-  authorizeRoles('admin'),
-  async (req, res) => {
-    const noticeId = req.params.id;
-    let connection;
-    try {
-      connection = await getDBConnection();
+app.delete('/notices/:id', authenticateToken, authorizeRoles('admin'), async (req, res) => {
+  const noticeId = req.params.id;
+  let connection;
+  try {
+    connection = await getDBConnection();
 
-      await connection.execute('DELETE FROM notices WHERE id = ?', [noticeId]);
+    await connection.execute('DELETE FROM notices WHERE id = ?', [noticeId]);
 
-      res.json({ success: true, message: 'Notice deleted successfully' });
-    } catch (error) {
-      console.error('Delete Notice Error:', error);
-      res.status(500).json({ success: false, message: 'Server error' });
-    } finally {
-      if (connection) await connection.end();
-    }
+    res.json({ success: true, message: 'Notice deleted successfully' });
+  } catch (error) {
+    console.error('Delete Notice Error:', error);
+    res.status(500).json({ success: false, message: 'Server error' });
+  } finally {
+    if (connection) await connection.end();
   }
-);
-
-// ========== Password reset ==========
+});
 
 // Request password reset token
 app.post('/request-password-reset', async (req, res) => {
@@ -579,66 +519,92 @@ app.post('/logout', authenticateToken, (req, res) => {
   res.json({ success: true, message: 'Logged out successfully (discard token client-side)' });
 });
 
-// ========== Chatbot API with OpenAI integration ==========
-app.post('/api/chatbot', async (req, res) => {
+// AI Chatbot endpoint
+app.post('/api/chatbot', authenticateToken, async (req, res) => {
   try {
     const message = (req.body.message || '').toLowerCase();
 
-    // Predefined replies
-    if (message.includes('citizenship')) {
-      return res.json({
-        reply: `To apply for a citizenship certificate:
-- Visit your local ward office
-- Bring a birth certificate, parent’s citizenship copies, and a recommendation letter
-- Fill out the citizenship application form`,
-      });
-    } else if (message.includes('passport')) {
-      return res.json({
-        reply: `To renew/apply for a passport:
-- Visit https://nepalpassport.gov.np
-- Book an appointment online
-- Bring citizenship and old passport (if any)
-- Visit your District Administration Office for biometric submission`,
-      });
-    } else if (message.includes('marriage')) {
-      return res.json({
-        reply: `To register a marriage:
-- Both parties must be present at the Ward Office
-- Submit citizenship copies, photos, and marriage recommendation form
-- Pay the applicable fee`,
-      });
-    } else if (message.includes('land')) {
-      return res.json({
-        reply: `For land registration/transfer:
-- Visit the Land Revenue Office
-- Submit land ownership documents, citizenship, and a transfer request
-- Pay registration and tax fees`,
-      });
-    } else if (message.includes('birth')) {
-      return res.json({
-        reply: `To get a birth certificate:
-- Go to your local Ward Office within 35 days of birth
-- Bring hospital birth report and parent's citizenship
-- Fill out the birth registration form`,
-      });
+    // Predefined responses for common government queries
+    const predefinedResponses = {
+      'citizenship': {
+        reply: `Citizenship Certificate Process:
+1. Visit your local ward office with:
+   - Birth certificate
+   - Parent's citizenship copies
+   - Recommendation letter
+   - Passport photos (2 copies)
+2. Fill application form
+3. Pay NPR 500-1000 fee
+4. Processing time: 15-30 days`,
+        keywords: ['citizenship', 'nagarikta']
+      },
+      'passport': {
+        reply: `Passport Application:
+1. Visit https://nepalpassport.gov.np
+2. Create account & fill application
+3. Book appointment
+4. Documents needed:
+   - Citizenship certificate
+   - Old passport (if renewing)
+5. Processing time: 7-15 days`,
+        keywords: ['passport', 'राहदानी']
+      },
+      'tax': {
+        reply: `Tax Payment:
+1. Online: https://ird.gov.np
+2. Required:
+   - PAN number
+   - Tax details
+3. Deadline: July 15 each year`,
+        keywords: ['tax', 'कर']
+      },
+      'complaint': {
+        reply: `To file a complaint:
+1. Online: https://complaint.gov.np
+2. In-person:
+   - Visit concerned department
+   - Fill complaint form
+   - Get tracking number
+3. Follow up using tracking number`,
+        keywords: ['complaint', 'शिकायत']
+      }
+      
+    };
+
+    // Check predefined responses first
+    for (const [key, response] of Object.entries(predefinedResponses)) {
+      if (response.keywords.some(kw => message.includes(kw))) {
+        return res.json({ 
+          reply: response.reply,
+          source: 'predefined'
+        });
+      }
     }
 
-    // If no predefined, fallback to OpenAI GPT
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        { role: 'system', content: 'You are a helpful government assistant chatbot.' },
-        { role: 'user', content: message },
-      ],
-      max_tokens: 200,
-    });
+    // Fallback to AI if no predefined response
+    /*if (!gpt4all) {
+      throw new Error('AI model not ready');
+    }
 
-    const aiReply = completion.choices[0].message.content.trim();
+    const prompt = `As a government assistant, answer concisely in bullet points if needed:
+    
+    Question: ${message}
+    
+    If unsure, direct to https://gov.np`;
 
-    res.json({ reply: aiReply });
+    const aiResponse = await gpt4all.prompt(prompt);
+    
+    res.json({
+      reply: aiResponse.trim(),
+      source: 'ai'
+    });*/
+
   } catch (error) {
-    console.error('Chatbot API Error:', error);
-    res.status(500).json({ reply: "Sorry, I am having trouble responding right now." });
+    console.error('Chatbot Error:', error);
+    res.json({
+      reply: "I can't answer right now. Please visit https://gov.np for help.",
+      source: 'error'
+    });
   }
 });
 
