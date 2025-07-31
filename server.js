@@ -19,24 +19,15 @@ app.use(express.urlencoded({ extended: true }));
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here';
 
 const dbConfig = {
-  host: process.env.DB_HOST ,
-  user: process.env.DB_USER ,
-  password: process.env.DB_PASSWORD ,
-  database: process.env.DB_NAME ,
-   ssl: {
-    rejectUnauthorized: true // Aiven requires SSL
-  }
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '12345678',
+  database: process.env.DB_NAME || 'gov_feedback',
 };
-/*db.connect(err => {
-  if (err) {
-    console.error('Database connection failed:', err);
-    return;
-  }
-  console.log('Connected to Aiven MySQL!');
-});
-/*async function getDBConnection() {
+
+async function getDBConnection() {
   return await mysql.createConnection(dbConfig);
-}*/
+}
 
 
 // Middleware to verify JWT token
@@ -615,22 +606,6 @@ app.post('/api/chatbot', authenticateToken, async (req, res) => {
       source: 'error'
     });
   }
-});
-app.use(express.static(__dirname));
-
-// Route for home page
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
-});
-
-// Route for admin page (if admin.html exists)
-app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "admin.html"));
-});
-
-// Route for citizen page (if citizen.html exists)
-app.get("/citizen", (req, res) => {
-  res.sendFile(path.join(__dirname, "citizen.html"));
 });
 
 app.listen(PORT, () => {
