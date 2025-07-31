@@ -607,11 +607,21 @@ app.post('/api/chatbot', authenticateToken, async (req, res) => {
     });
   }
 });
-app.use(express.static(path.join(__dirname, "frontend")));
+app.use(express.static(__dirname));
 
-// Always serve index.html for `/`
+// Route for home page
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "frontend", "index.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+// Route for admin page (if admin.html exists)
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "admin.html"));
+});
+
+// Route for citizen page (if citizen.html exists)
+app.get("/citizen", (req, res) => {
+  res.sendFile(path.join(__dirname, "citizen.html"));
 });
 
 app.listen(PORT, () => {
