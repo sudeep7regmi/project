@@ -27,7 +27,7 @@ const dbConfig = {
     rejectUnauthorized: true // Aiven requires SSL
   }
 };
-db.connect(err => {
+/*db.connect(err => {
   if (err) {
     console.error('Database connection failed:', err);
     return;
