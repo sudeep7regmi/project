@@ -609,7 +609,7 @@ app.post('/api/chatbot', authenticateToken, async (req, res) => {
 });
 app.use(express.static(path.join(__dirname, "frontend")));
 
-// Route `/` to index.html
+// Always serve index.html for `/`
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "frontend", "index.html"));
 });
