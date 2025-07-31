@@ -19,15 +19,24 @@ app.use(express.urlencoded({ extended: true }));
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here';
 
 const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '12345678',
-  database: process.env.DB_NAME || 'gov_feedback',
+  host: process.env.DB_HOST ,
+  user: process.env.DB_USER ,
+  password: process.env.DB_PASSWORD ,
+  database: process.env.DB_NAME ,
+   ssl: {
+    rejectUnauthorized: true // Aiven requires SSL
+  }
 };
-
-async function getDBConnection() {
+db.connect(err => {
+  if (err) {
+    console.error('Database connection failed:', err);
+    return;
+  }
+  console.log('Connected to Aiven MySQL!');
+});
+/*async function getDBConnection() {
   return await mysql.createConnection(dbConfig);
-}
+}*/
 
 
 // Middleware to verify JWT token
