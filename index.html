@@ -7,17 +7,18 @@
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Google Fonts - Inter (preferred for Tailwind) -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
     /* Custom styles for background and overlay, and to override some Tailwind defaults if needed */
     body {
       font-family: 'Inter', sans-serif; /* Using Inter for consistency with Tailwind projects */
-      background: url('photos/background.jpg') no-repeat center center fixed;
+      background: url('background.jpg') no-repeat center center fixed; /* Reverted to original background.jpg */
       background-size: cover;
-      color: #fff; /* Default text color for body */
+      color: #E2E8F0; /* Light gray for default text for better contrast on dark backgrounds */
+      overflow-x: hidden; /* Prevent horizontal scroll when sidebar is out of view */
     }
     .overlay {
-      background-color: rgba(0,0,0,0.7); /* Slightly darker overlay for better contrast */
+      background-color: rgba(26, 32, 44, 0.85); /* Darker, more opaque overlay for a premium feel */
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       z-index: -1; /* Ensure overlay is behind content */
@@ -25,12 +26,23 @@
     /* Specific styling for sections to ensure proper padding and min-height */
     section {
         min-height: 80vh; /* Ensure sections take up substantial vertical space */
-        padding: 4rem 1rem; /* Default padding for all sections */
+        padding: 6rem 1.5rem; /* Increased padding for more breathing room */
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         text-align: center;
+
+        /* Initial state for scroll animation */
+        opacity: 0;
+        transform: translateY(30px); /* Slightly more pronounced slide */
+        transition: opacity 0.8s ease-out, transform 0.8s ease-out; /* Slower, smoother transition */
+    }
+
+    /* State when section is visible */
+    section.is-visible {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     /* Adjusting the hero section's specific height */
@@ -42,70 +54,206 @@
     }
 
     .glassmorphism {
-        background: rgba(255, 255, 255, 0.1); /* Lighter background for a glass effect */
-        backdrop-filter: blur(10px); /* Blur effect */
-        -webkit-backdrop-filter: blur(10px); /* Safari support */
-        border: 1px solid rgba(255, 255, 255, 0.2); /* Light border */
+        background: rgba(255, 255, 255, 0.08); /* More subtle glass effect */
+        backdrop-filter: blur(12px); /* Increased blur effect */
+        -webkit-backdrop-filter: blur(12px); /* Safari support */
+        border: 1px solid rgba(255, 255, 255, 0.15); /* Fainter border */
+        border-radius: 1rem; /* More rounded corners for a softer look */
     }
 
     /* Smooth scroll behavior is enabled on the html tag */
     html {
       scroll-behavior: smooth;
     }
+
+    /* Sidebar specific styles */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: -300px; /* Hidden by default, slides from left */
+      width: 300px;
+      height: 100%;
+      background-color: rgba(23, 30, 48, 0.98); /* Darker, almost solid background for sidebar */
+      backdrop-filter: blur(15px); /* Stronger blur for sidebar */
+      -webkit-backdrop-filter: blur(15px);
+      z-index: 100; /* Above other content */
+      transition: left 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* More sophisticated transition curve */
+      padding-top: 5rem; /* More space for the close button and top content */
+      box-shadow: 4px 0 15px rgba(0,0,0,0.5); /* More pronounced shadow */
+    }
+
+    .sidebar.open {
+      left: 0; /* Slide in */
+    }
+
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.6); /* Slightly darker overlay when sidebar is open */
+      z-index: 99; /* Below sidebar, above content */
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.4s ease-in-out;
+    }
+
+    .sidebar-overlay.open {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Header for the hamburger button */
+    .header-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 60; /* Above sections, below sidebar */
+      padding: 1.25rem 1.5rem; /* Increased padding */
+      display: flex;
+      justify-content: space-between; /* Keeps items at ends */
+      align-items: center;
+      background-color: rgba(17, 24, 39, 0.9); /* Darker, more solid header background */
+      backdrop-filter: blur(10px); /* Stronger blur for header */
+      -webkit-backdrop-filter: blur(10px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* More pronounced shadow */
+    }
+
+    /* Styles for feature cards in Benefits and Key Features sections */
+    .feature-card {
+      background-color: rgba(30, 41, 59, 0.7); /* Darker blue-gray with more opacity */
+      border: 1px solid rgba(59, 70, 89, 0.8); /* Refined border color */
+      transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out, background-color 0.3s ease-in-out;
+      border-radius: 0.75rem; /* More rounded corners */
+      padding: 2rem; /* Increased padding */
+      box-shadow: 0 6px 12px rgba(0,0,0,0.2); /* Stronger initial shadow */
+      display: flex;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px) scale(1.02); /* More pronounced lift and slight scale */
+      box-shadow: 0 15px 25px rgba(0,0,0,0.4); /* Much stronger shadow on hover */
+      background-color: rgba(40, 50, 70, 0.8); /* Slightly lighter background on hover */
+    }
+
+    .feature-card svg {
+      flex-shrink: 0;
+      margin-right: 1.25rem; /* Increased margin */
+      margin-top: 0.125rem; /* Fine-tuned alignment */
+      width: 3rem; /* Even larger icon */
+      height: 3rem; /* Even larger icon */
+      color: #6366F1; /* A vibrant indigo for accent */
+    }
+
+    .feature-card h3 {
+      font-weight: 700; /* Bolder headings */
+      color: #CBD5E0; /* Lighter text for headings */
+    }
+
+    .feature-card p {
+      color: #A0AEC0; /* Slightly lighter text for body */
+    }
+
+    /* Adjusting text sizes for better hierarchy and readability */
+    h1 {
+        font-size: 4.5rem; /* Larger hero heading */
+        line-height: 1.1;
+        font-weight: 800; /* Extra bold */
+        color: #F8FAFC; /* Almost white */
+    }
+    h2 {
+        font-size: 3.5rem; /* Larger section headings */
+        line-height: 1.2;
+        font-weight: 800;
+        color: #F8FAFC;
+    }
+    .text-xl {
+        font-size: 1.3rem; /* Slightly larger body text in hero */
+    }
+    .text-2xl {
+        font-size: 1.75rem; /* Slightly larger feature card headings */
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-gray-100 antialiased">
   <div class="overlay"></div>
 
-  <!-- Sticky Navigation Bar -->
-  <nav class="sticky top-0 z-50 w-full bg-gray-900 bg-opacity-80 backdrop-blur-md shadow-lg p-4 flex justify-center space-x-6 rounded-b-lg">
-    <a href="#hero" class="text-lg font-medium text-white hover:text-blue-400 transition duration-300">Home</a>
-    <a href="#about" class="text-lg font-medium text-white hover:text-blue-400 transition duration-300">About Us</a>
-    <a href="#how-it-works" class="text-lg font-medium text-white hover:text-blue-400 transition duration-300">How it Works</a>
-    <a href="#benefits" class="text-lg font-medium text-white hover:text-blue-400 transition duration-300">Benefits</a>
-    <a href="#contact" class="text-lg font-medium text-white hover:text-blue-400 transition duration-300">Get Started</a>
-  </nav>
+  <!-- New Header Bar with Hamburger Button -->
+  <header class="header-bar">
+    <!-- Hamburger button on the left -->
+    <button id="sidebar-toggle" class="text-white hover:text-indigo-400 focus:outline-none transition duration-200">
+      <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+    </button>
+    <!-- Site title on the right -->
+    <a href="#hero" class="text-2xl font-extrabold text-white hover:text-indigo-400 transition duration-300">GovFeedback <span class="text-indigo-400">Pro</span></a>
+  </header>
+
+  <!-- Sidebar Overlay -->
+  <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+  <!-- Sidebar -->
+  <div id="sidebar" class="sidebar">
+    <button id="sidebar-close" class="absolute top-5 right-5 text-white hover:text-indigo-400 focus:outline-none transition duration-200">
+      <svg class="w-9 h-9" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    </button>
+    <nav class="flex flex-col items-center space-y-8 pt-20">
+      <a href="#hero" class="text-2xl font-medium text-white hover:text-indigo-400 transition duration-300" onclick="closeSidebar()">Home</a>
+      <a href="#about" class="text-2xl font-medium text-white hover:text-indigo-400 transition duration-300" onclick="closeSidebar()">About Us</a>
+      <a href="#how-it-works" class="text-2xl font-medium text-white hover:text-indigo-400 transition duration-300" onclick="closeSidebar()">How it Works</a>
+      <a href="#benefits" class="text-2xl font-medium text-white hover:text-indigo-400 transition duration-300" onclick="closeSidebar()">Benefits</a>
+      <a href="#features" class="text-2xl font-medium text-white hover:text-indigo-400 transition duration-300" onclick="closeSidebar()">Key Features</a>
+      <a href="#contact" class="text-2xl font-medium text-white hover:text-indigo-400 transition duration-300" onclick="closeSidebar()">Get Started</a>
+      <div class="flex flex-col gap-5 mt-10 w-4/5">
+        <a href="register.html" class="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg transition duration-300 ease-in-out transform hover:scale-105 text-center text-xl">Register Account</a>
+        <a href="login.html" class="px-8 py-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-xl shadow-lg transition duration-300 ease-in-out transform hover:scale-105 text-center text-xl">Login Securely</a>
+      </div>
+    </nav>
+  </div>
 
   <!-- Hero Section (Original Content) -->
   <section id="hero" class="relative w-full h-screen flex items-center justify-center text-center px-4">
-    <div class="max-w-xl p-8 rounded-xl glassmorphism shadow-2xl mx-auto">
-      <h1 class="text-5xl md:text-6xl font-extrabold mb-4 leading-tight">Welcome to Government Feedback System</h1>
-      <p class="text-xl md:text-2xl mb-8 leading-relaxed text-gray-200">Your voice matters. Register as a citizen to submit your feedback and complaints, or log in if you already have an account.</p>
+    <div class="max-w-2xl p-10 rounded-xl glassmorphism shadow-2xl mx-auto">
+      <h1 class="text-5xl md:text-6xl font-extrabold mb-4 leading-tight">Empowering Government Through Citizen Voice</h1>
+      <p class="text-xl md:text-2xl mb-8 leading-relaxed text-gray-200">A robust platform designed for seamless citizen engagement and transparent governance. Your insights drive impactful change.</p>
       <div class="flex flex-col sm:flex-row justify-center gap-4">
-        <a href="register.html" class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Register</a>
-        <a href="login.html" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Login</a>
+        <a href="register.html" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Register Now</a>
+        <a href="login.html" class="px-8 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Login</a>
       </div>
     </div>
   </section>
 
   <!-- About Us Section -->
   <section id="about" class="w-full bg-gray-800 bg-opacity-70 text-center py-20 px-4">
-    <div class="max-w-4xl mx-auto p-8 rounded-xl glassmorphism shadow-2xl">
-      <h2 class="text-4xl md:text-5xl font-bold mb-6">About Our System</h2>
-      <p class="text-lg md:text-xl leading-relaxed text-gray-200 mb-6">The Government Feedback System is designed to bridge the gap between citizens and their local government. We believe in transparent governance and the power of public opinion to drive positive change.</p>
-      <p class="text-lg md:text-xl leading-relaxed text-gray-200">Our platform provides a secure and easy-to-use channel for you to submit various types of feedback, including suggestions for improvement, reports of issues, and direct complaints. Your submissions are directed to the relevant government departments, ensuring your voice is heard and acted upon.</p>
+    <div class="max-w-5xl mx-auto p-10 rounded-xl glassmorphism shadow-2xl">
+      <h2 class="text-4xl md:text-5xl font-bold mb-6">About GovFeedback Pro</h2>
+      <p class="text-lg md:text-xl leading-relaxed text-gray-200 mb-6">GovFeedback Pro is an innovative digital platform designed to foster a direct and transparent line of communication between citizens and their local government bodies. We are committed to empowering individuals by providing a robust, secure, and intuitive channel for submitting a wide array of feedback, including valuable suggestions for urban and rural development, detailed reports of public infrastructure issues, and formal complaints regarding public services. Our core mission is to enhance civic participation and promote accountability, ensuring that every citizen's voice is not only heard but also meticulously documented and routed to the most relevant government departments for timely and effective action. We believe that an informed and engaged citizenry is the cornerstone of progressive governance and a thriving community.</p>
+      <p class="text-lg md:text-xl leading-relaxed text-gray-200">Our platform simplifies the process of civic engagement, making it easier than ever for you to contribute to the betterment of your community. By streamlining the feedback loop, we aim to transform public opinion into tangible improvements, fostering a more responsive and efficient government that truly serves its people. Join us in building a future where every voice contributes to positive change.</p>
     </div>
   </section>
 
   <!-- How It Works Section -->
   <section id="how-it-works" class="w-full bg-gray-900 bg-opacity-70 text-center py-20 px-4">
-    <div class="max-w-4xl mx-auto p-8 rounded-xl glassmorphism shadow-2xl">
-      <h2 class="text-4xl md:text-5xl font-bold mb-12">How It Works</h2>
+    <div class="max-w-5xl mx-auto p-10 rounded-xl glassmorphism shadow-2xl">
+      <h2 class="text-4xl md:text-5xl font-bold mb-12">Our Streamlined Process</h2>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8 text-gray-200">
-        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600">
-          <svg class="w-16 h-16 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM12 14c-1.474-1.285-2.937-2.457-3.95-3.376M21 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2a2 2 0 002 2h14a2 2 0 002-2z"></path></svg>
-          <h3 class="text-2xl font-semibold mb-3">1. Register/Login</h3>
-          <p>Create a new account or log in with your existing credentials to access the feedback submission portal.</p>
+        <div class="feature-card items-center flex-col text-center">
+          <svg class="w-16 h-16 mb-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM12 14c-1.474-1.285-2.937-2.457-3.95-3.376M21 21v-2a4 4 0 00-4-4H7a4 4 0 00-4 4v2a2 2 0 002 2h14a2 2 0 002-2z"></path></svg>
+          <h3 class="text-2xl font-semibold mb-3 text-white">1. Secure Access</h3>
+          <p class="text-gray-300">Begin your journey by either creating a new, secure account or logging in with your existing credentials. Our streamlined registration process ensures quick access to the citizen feedback portal, allowing you to engage with the system effortlessly.</p>
         </div>
-        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600">
-          <svg class="w-16 h-16 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-          <h3 class="text-2xl font-semibold mb-3">2. Submit Feedback</h3>
-          <p>Fill out our simple form with your suggestions, complaints, or reports. Attach files if necessary.</p>
+        <div class="feature-card items-center flex-col text-center">
+          <svg class="w-16 h-16 mb-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          <h3 class="text-2xl font-semibold mb-3 text-white">2. Submit Feedback</h3>
+          <p class="text-gray-300">Once logged in, you can easily submit your feedback using our intuitive form. Whether it's a suggestion for public services, a report on infrastructure issues, or a formal complaint, the form is designed for clarity and ease of use. You can also attach relevant files, such as photos or documents, to support your submission.</p>
         </div>
-        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600">
-          <svg class="w-16 h-16 mx-auto mb-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-          <h3 class="2xl font-semibold mb-3">3. Track & Engage</h3>
-          <p>Monitor the status of your submission and receive updates from the relevant government department.</p>
+        <div class="feature-card items-center flex-col text-center">
+          <svg class="w-16 h-16 mb-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+          <h3 class="2xl font-semibold mb-3 text-white">3. Track & Engage</h3>
+          <p class="text-gray-300">After submission, you can actively monitor the status of your feedback in real-time through your personal dashboard. Receive timely updates from the relevant government departments, view their responses, and track the progress of your reported issues until resolution. This ensures transparency and keeps you informed every step of the way.</p>
         </div>
       </div>
     </div>
@@ -113,35 +261,86 @@
 
   <!-- Benefits Section -->
   <section id="benefits" class="w-full bg-gray-800 bg-opacity-70 text-center py-20 px-4">
-    <div class="max-w-4xl mx-auto p-8 rounded-xl glassmorphism shadow-2xl">
-      <h2 class="text-4xl md:text-5xl font-bold mb-12">Benefits of Using Our System</h2>
+    <div class="max-w-5xl mx-auto p-10 rounded-xl glassmorphism shadow-2xl">
+      <h2 class="text-4xl md:text-5xl font-bold mb-12">Key Advantages</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-200">
-        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600 flex items-start text-left">
-          <svg class="w-8 h-8 mr-4 mt-1 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <div class="feature-card">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
           <div>
             <h3 class="text-2xl font-semibold mb-2">Direct Communication</h3>
-            <p>Your feedback goes directly to the appropriate government officials, ensuring your concerns are addressed efficiently.</p>
+            <p>Our system ensures your feedback is routed directly to the appropriate government officials and departments. This eliminates intermediaries, accelerates the communication process, and guarantees that your concerns are addressed by those with the authority to act, leading to more efficient resolutions.</p>
           </div>
         </div>
-        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600 flex items-start text-left">
-          <svg class="w-8 h-8 mr-4 mt-1 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0v4m-8 0h8m-8 0H8m7 3ddddddddd7 0a4 4 0 11-8 0 4 4 0 018 0zM12 14v4m0 0h4m-4 0H8"></path></svg>
+        <div class="feature-card">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0v4m-8 0h8m-8 0H8m7 3ddddddddd7 0a4 4 0 11-8 0 4 4 0 018 0zM12 14v4m0 0h4m-4 0H8"></path></svg>
           <div>
             <h3 class="text-2xl font-semibold mb-2">Increased Transparency</h3>
-            <p>Track the status of your submissions and see how your feedback contributes to community improvements.</p>
+            <p>Gain full visibility into the lifecycle of your feedback. From submission to resolution, you can track the status of your reports, view official responses, and understand the actions being taken. This transparency fosters trust and allows you to see how your input directly contributes to community improvements.</p>
           </div>
         </div>
-        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600 flex items-start text-left">
-          <svg class="w-8 h-8 mr-4 mt-1 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        <div class="feature-card">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
           <div>
             <h3 class="text-2xl font-semibold mb-2">Community Impact</h3>
-            <p>Your contributions help identify areas for improvement, leading to a better living environment for everyone.</p>
+            <p>Your contributions are vital for identifying areas that require attention and improvement within the community. By reporting issues and offering suggestions, you actively participate in shaping public policy and service delivery, leading to a better, more responsive living environment for everyone.</p>
           </div>
         </div>
-        <div class="p-6 rounded-lg bg-gray-700 bg-opacity-50 shadow-lg border border-gray-600 flex items-start text-left">
-          <svg class="w-8 h-8 mr-4 mt-1 text-green-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+        <div class="feature-card">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
           <div>
             <h3 class="text-2xl font-semibold mb-2">Enhanced Efficiency</h3>
-            <p>Streamlined feedback submission and tracking processes save time for both citizens and government bodies.</p>
+            <p>The system's streamlined feedback submission and tracking processes significantly reduce administrative overhead for both citizens and government bodies. This efficiency ensures that issues are addressed more quickly, resources are allocated effectively, and overall public service delivery is improved.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- New Key Features Section -->
+  <section id="features" class="w-full bg-gray-900 bg-opacity-70 text-center py-20 px-4">
+    <div class="max-w-5xl mx-auto p-10 rounded-xl glassmorphism shadow-2xl">
+      <h2 class="text-4xl md:text-5xl font-bold mb-12">Core Capabilities</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-gray-200">
+        <div class="feature-card">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+          <div>
+            <h3 class="text-2xl font-semibold mb-2">Intuitive Submission Forms</h3>
+            <p>Our user-friendly forms are designed for ease of use, allowing citizens to quickly and clearly articulate their feedback, suggestions, or complaints. Categorized fields and clear instructions ensure all necessary information is captured efficiently.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+          <div>
+            <h3 class="text-2xl font-semibold mb-2">Real-time Tracking Dashboard</h3>
+            <p>Citizens can access a personalized dashboard to monitor the live status of their submitted feedback. This includes viewing processing stages, assigned departments, and estimated resolution times, providing complete transparency.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+          <div>
+            <h3 class="text-2xl font-semibold mb-2">Direct Departmental Routing</h3>
+            <p>Feedback is automatically categorized and routed to the most relevant government department or agency. This intelligent routing ensures that issues reach the correct authority quickly, preventing delays and misdirection.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-2 4h4m-4-11h.01M12 12V9m0 3a3 3 0 110-6 3 3 0 010 6zm-3 6h6a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 002 2z"></path></svg>
+          <div>
+            <h3 class="text-2xl font-semibold mb-2">Secure & Private Data Handling</h3>
+            <p>We prioritize the security and privacy of your data. All submissions are encrypted, and personal information is handled in strict compliance with data protection regulations, ensuring a safe and confidential feedback process.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+          <div>
+            <h3 class="text-2xl font-semibold mb-2">Attachment Support</h3>
+            <p>Enhance your feedback with visual evidence. The system allows you to attach images, documents, or other relevant files to your submissions, providing government officials with a clearer understanding of the issue or suggestion.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H2v-2a3 3 0 015.356-1.857M17 20v-9a2 2 0 00-2-2H9a2 2 0 00-2 2v9m-1-7h6m-3 0V7m0 10v4"></path></svg>
+          <div>
+            <h3 class="text-2xl font-semibold mb-2">Multi-user Support (Admin/Citizen)</h3>
+            <p>The platform supports distinct user roles for both citizens and government administrators. This ensures tailored interfaces and functionalities, allowing citizens to submit and track, while administrators can manage, respond to, and analyze feedback efficiently.</p>
           </div>
         </div>
       </div>
@@ -150,16 +349,72 @@
 
   <!-- Call to Action Section -->
   <section id="contact" class="w-full bg-gray-900 bg-opacity-70 text-center py-20 px-4">
-    <div class="max-w-xl p-8 rounded-xl glassmorphism shadow-2xl mx-auto">
-      <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Make a Difference?</h2>
-      <p class="text-xl md:text-2xl mb-8 leading-relaxed text-gray-200">Join our community and help shape a better future for everyone. Your input is invaluable!</p>
-      <!-- Removed duplicate Register/Login buttons from here -->
+    <div class="max-w-xl p-10 rounded-xl glassmorphism shadow-2xl mx-auto">
+      <h2 class="text-4xl md:text-5xl font-bold mb-6">Ready to Drive Change?</h2>
+      <p class="text-xl md:text-2xl mb-8 leading-relaxed text-gray-200">Join our growing community of engaged citizens and help shape a more responsive and efficient future for everyone. Your input is invaluable!</p>
+      <div class="flex flex-col sm:flex-row justify-center gap-4">
+        <a href="register.html" class="px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-lg transition duration-300 ease-in-out transform hover:scale-105">Get Started Today</a>
+      </div>
     </div>
   </section>
 
   <!-- Footer -->
   <footer class="w-full py-6 text-center text-gray-400 text-sm bg-gray-900 bg-opacity-80 rounded-t-lg">
-    © 2025 Local Government Portal. All rights reserved.
+    © 2025 GovFeedback Pro. All rights reserved.
   </footer>
+
+  <script>
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarClose = document.getElementById('sidebar-close');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    function openSidebar() {
+      sidebar.classList.add('open');
+      sidebarOverlay.classList.add('open');
+      document.body.style.overflow = 'hidden'; // Prevent scrolling when sidebar is open
+    }
+
+    function closeSidebar() {
+      sidebar.classList.remove('open');
+      sidebarOverlay.classList.remove('open');
+      document.body.style.overflow = ''; // Restore scrolling
+    }
+
+    sidebarToggle.addEventListener('click', openSidebar);
+    sidebarClose.addEventListener('click', closeSidebar);
+    sidebarOverlay.addEventListener('click', closeSidebar); // Close sidebar when clicking overlay
+
+    // Close sidebar when a navigation link is clicked
+    document.querySelectorAll('.sidebar a').forEach(link => {
+      link.addEventListener('click', closeSidebar);
+    });
+
+    // Intersection Observer for section animations
+    const sections = document.querySelectorAll('section');
+
+    const observerOptions = {
+      root: null, // viewport
+      rootMargin: '0px',
+      threshold: 0.15 // Trigger when 15% of the section is visible
+    };
+
+    const observer = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          // Optionally, unobserve once it's visible to prevent re-triggering
+          // observer.unobserve(entry.target);
+        } else {
+          // Optional: remove 'is-visible' when out of view if you want re-animation on scroll back
+          // entry.target.classList.remove('is-visible');
+        }
+      });
+    }, observerOptions);
+
+    sections.forEach(section => {
+      observer.observe(section);
+    });
+  </script>
 </body>
 </html>
