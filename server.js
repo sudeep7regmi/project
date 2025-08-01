@@ -20,10 +20,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_here';
 
 const dbConfig = {
   host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 3306, // Add port (default to 3306)
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
 };
+
+
 
 async function getDBConnection() {
   return await mysql.createConnection(dbConfig);
