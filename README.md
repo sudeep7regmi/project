@@ -2,7 +2,7 @@
 
 ## build and run
 
-Open a terminal and run following commands to build and run the application
+Create the .env file, then open a terminal and run following commands
 
 ```console
 git clone https://github.com/sudeep7regmi/project.git
