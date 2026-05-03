@@ -1,7 +1,7 @@
-require("dotenv").config();
+/*require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
-const mysql = require("mysql2/promise");
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const path = require("path");
@@ -17,29 +17,22 @@ app.use(express.urlencoded({ extended: true }));
 
 const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_here";
 
-const dbConfig = {
+
+
+
+
+const db = require("mysql2/promise").createPool({
   host: process.env.DB_HOST,
-  port: process.env.DB_PORT || 3306, // Add port (default to 3306)
+  port: process.env.DB_PORT,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
-};
-
-console.log("using db config", dbConfig);
-
-let db;
-
-async function getDBConnection() {
-  if (!db) {
-    try {
-      db = await mysql.createConnection(dbConfig);
-      console.log("created db connection:", db);
-    } catch (err) {
-      console.error("failed to create db connection:", err);
-    }
-  }
-  return db;
-}
+  ssl: {
+    rejectUnauthorized: false,
+  },
+  waitForConnections: true,
+  connectionLimit: 10,
+});
 
 // Middleware to verify JWT token
 function authenticateToken(req, res, next) {
@@ -700,7 +693,7 @@ app.post("/api/chatbot", authenticateToken, async (req, res) => {
       reply: aiResponse.trim(),
       source: 'ai'
     });*/
-  } catch (error) {
+/*  } catch (error) {
     console.error("Chatbot Error:", error);
     res.json({
       reply: "I can't answer right now. Please visit https://gov.np for help.",
@@ -728,4 +721,245 @@ app.get("/citizen", (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
+});*/
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+const mysql = require("mysql2/promise");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const path = require("path");
+const crypto = require("crypto");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.static(path.join(__dirname, "frontend")));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_here";
+
+// ================= DATABASE POOL =================
+const db = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+});
+
+// Helper DB query wrapper
+const query = async (sql, params) => {
+  const [rows] = await db.execute(sql, params);
+  return rows;
+};
+
+// ================= AUTH MIDDLEWARE =================
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (!token)
+    return res.status(401).json({ success: false, message: "No token provided" });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err)
+      return res.status(403).json({ success: false, message: "Invalid token" });
+
+    req.user = user;
+    next();
+  });
+}
+
+function authorizeRoles(...allowedRoles) {
+  return (req, res, next) => {
+    if (!allowedRoles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied: insufficient permissions",
+      });
+    }
+    next();
+  };
+}
+
+// ================= ROUTES =================
+
+// REGISTER
+app.post("/register", async (req, res) => {
+  const { name, email, password } = req.body;
+  const role = "citizen";
+
+  if (!name || !email || !password)
+    return res.status(400).json({ success: false, message: "Missing fields" });
+
+  try {
+    const existing = await query("SELECT id FROM users WHERE email = ?", [email]);
+    if (existing.length > 0)
+      return res.status(400).json({ success: false, message: "Email exists" });
+
+    const hashed = await bcrypt.hash(password, 10);
+
+    await query(
+      "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)",
+      [name, email, hashed, role]
+    );
+
+    res.json({ success: true, message: "Registered successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// LOGIN
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const users = await query("SELECT * FROM users WHERE email = ?", [email]);
+    if (users.length === 0)
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
+
+    const user = users[0];
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match)
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
+
+    const token = jwt.sign(
+      { id: user.id, role: user.role },
+      JWT_SECRET,
+      { expiresIn: "1h" }
+    );
+
+    res.json({
+      success: true,
+      token,
+      role: user.role,
+      redirect: user.role === "admin" ? "/admin.html" : "/citizen.html",
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// FEEDBACK (citizen)
+app.post("/feedback", authenticateToken, authorizeRoles("citizen"), async (req, res) => {
+  const { subject, message, priority } = req.body;
+
+  try {
+    await query(
+      "INSERT INTO feedback (user_id, subject, message, priority) VALUES (?, ?, ?, ?)",
+      [req.user.id, subject, message, priority.toLowerCase()]
+    );
+
+    res.json({ success: true, message: "Feedback submitted" });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// GET FEEDBACK (admin)
+app.get("/feedback", authenticateToken, authorizeRoles("admin"), async (req, res) => {
+  try {
+    const feedbacks = await query(`
+      SELECT f.*, u.name AS user_name,
+      (SELECT COUNT(*) FROM upvotes up WHERE up.feedback_id = f.id) AS upvotes_count
+      FROM feedback f
+      JOIN users u ON f.user_id = u.id
+      ORDER BY f.id DESC
+    `);
+
+    res.json({ success: true, feedbacks });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// MY FEEDBACK
+app.get("/my-feedback", authenticateToken, authorizeRoles("citizen"), async (req, res) => {
+  try {
+    const feedbacks = await query(
+      "SELECT * FROM feedback WHERE user_id = ? ORDER BY id DESC",
+      [req.user.id]
+    );
+
+    res.json({ success: true, feedbacks });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// UPVOTE
+app.post("/upvote", authenticateToken, authorizeRoles("citizen"), async (req, res) => {
+  const { feedbackId } = req.body;
+
+  try {
+    const existing = await query(
+      "SELECT * FROM upvotes WHERE user_id = ? AND feedback_id = ?",
+      [req.user.id, feedbackId]
+    );
+
+    if (existing.length > 0)
+      return res.status(400).json({ success: false, message: "Already upvoted" });
+
+    await query(
+      "INSERT INTO upvotes (user_id, feedback_id) VALUES (?, ?)",
+      [req.user.id, feedbackId]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// NOTICES
+app.post("/notices", authenticateToken, authorizeRoles("admin"), async (req, res) => {
+  const { title, content } = req.body;
+
+  try {
+    await query("INSERT INTO notices (title, content) VALUES (?, ?)", [
+      title,
+      content,
+    ]);
+
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+app.get("/notices", authenticateToken, async (req, res) => {
+  try {
+    const notices = await query("SELECT * FROM notices ORDER BY id DESC");
+    res.json({ success: true, notices });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
+});
+
+// CHATBOT (simple)
+app.post("/api/chatbot", authenticateToken, async (req, res) => {
+  const msg = (req.body.message || "").toLowerCase();
+
+  if (msg.includes("citizenship")) {
+    return res.json({ reply: "Visit ward office with documents..." });
+  }
+
+  res.json({ reply: "Please visit https://gov.np for help" });
+});
+
+// STATIC ROUTES
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT);
 });
